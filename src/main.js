@@ -158,9 +158,10 @@ function showCard(data) {
 function hideCard() { card.classList.add('hidden'); }
 
 // ── Camera animation ──────────────────────────────────────────────
-function moveCameraTo(toPos, toLookAt, onDone) {
+function moveCameraTo(toPos, toLookAt, toUp, onDone) {
   cam.tgtPos.copy(toPos);
   cam.tgtLookAt.copy(toLookAt);
+  cam.tgtUp.copy(toUp);
   cam.animating = true;
   cam.onDone = onDone || null;
 }

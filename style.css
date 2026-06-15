@@ -84,6 +84,42 @@ html, body {
   border-radius: 4px;
 }
 
+#card-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.82rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(100, 160, 255, 0.1);
+}
+
+.stat-label {
+  color: rgba(160, 200, 255, 0.6);
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+}
+
+.stat-value {
+  color: var(--card-text);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-section-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(160, 200, 255, 0.45);
+  margin-bottom: 0.4rem;
+}
+
 #card-close {
   background: transparent;
   border: 1px solid var(--card-border);
