@@ -19,14 +19,16 @@ const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerH
 const cam = {
   pos:       new THREE.Vector3(0, 110, 0),
   lookAt:    new THREE.Vector3(0, 0, 0),
+  up:        new THREE.Vector3(0, 0, -1),
   tgtPos:    new THREE.Vector3(0, 110, 0),
   tgtLookAt: new THREE.Vector3(0, 0, 0),
+  tgtUp:     new THREE.Vector3(0, 0, -1),
   animating: false,
   onDone: null,
 };
 
 camera.position.copy(cam.pos);
-camera.up.set(0, 0, -1); // top-down "north" = -Z
+camera.up.copy(cam.up); // top-down "north" = -Z
 camera.lookAt(cam.lookAt);
 
 // ── Lights ────────────────────────────────────────────────────────
@@ -142,9 +144,10 @@ function showCard(data) {
 function hideCard() { card.classList.add('hidden'); }
 
 // ── Camera animation ──────────────────────────────────────────────
-function moveCameraTo(toPos, toLookAt, onDone) {
+function moveCameraTo(toPos, toLookAt, toUp, onDone) {
   cam.tgtPos.copy(toPos);
   cam.tgtLookAt.copy(toLookAt);
+  cam.tgtUp.copy(toUp);
   cam.animating = true;
   cam.onDone = onDone || null;
 }
@@ -154,12 +157,16 @@ function tickCamera(dt) {
   const k = Math.min(1, dt * 2.6);
   cam.pos.lerp(cam.tgtPos, k);
   cam.lookAt.lerp(cam.tgtLookAt, k);
+  cam.up.lerp(cam.tgtUp, k).normalize();
   camera.position.copy(cam.pos);
+  camera.up.copy(cam.up);
   camera.lookAt(cam.lookAt);
   if (cam.pos.distanceTo(cam.tgtPos) < 0.3) {
     cam.pos.copy(cam.tgtPos);
     cam.lookAt.copy(cam.tgtLookAt);
+    cam.up.copy(cam.tgtUp);
     camera.position.copy(cam.pos);
+    camera.up.copy(cam.up);
     camera.lookAt(cam.lookAt);
     cam.animating = false;
     const cb = cam.onDone; cam.onDone = null;
@@ -173,14 +180,13 @@ function selectPlanet(p) {
   viewMode = 'front';
   hint.style.opacity = '0';
   hideCard();
-  camera.up.set(0, 1, 0);
 
   const { x, z } = p.mesh.position;
   const or = p.data.orbitRadius;
   const camDist = p.vr * 8 + 10;
   const camPos = new THREE.Vector3(x + (x / or) * camDist, 3, z + (z / or) * camDist);
 
-  moveCameraTo(camPos, new THREE.Vector3(x, 0, z), () => showCard(p.data));
+  moveCameraTo(camPos, new THREE.Vector3(x, 0, z), new THREE.Vector3(0, 1, 0), () => showCard(p.data));
 }
 
 function backToTop() {
@@ -188,9 +194,8 @@ function backToTop() {
   activePlanet = null;
   viewMode = 'top';
   hint.style.opacity = '1';
-  camera.up.set(0, 0, -1);
 
-  moveCameraTo(new THREE.Vector3(0, 110, 0), new THREE.Vector3(0, 0, 0), null);
+  moveCameraTo(new THREE.Vector3(0, 110, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1), null);
 }
 
 // ── Raycaster ─────────────────────────────────────────────────────
