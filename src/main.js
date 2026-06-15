@@ -163,7 +163,7 @@ const planets = planetBodies.map((data, i) => {
     });
   }
 
-  return { mesh, data, angle: startAngle, speed: data.orbitSpeed * 0.007, vr };
+  return { mesh, orbitMesh, data, angle: startAngle, speed: data.orbitSpeed * 0.007, vr };
 });
 
 const meshList = planets.map(p => p.mesh);
@@ -268,6 +268,9 @@ document.getElementById('app').appendChild(hint);
 let viewMode = 'top';
 let activePlanet = null;
 let hoveredPlanet = null;
+let showOrbits = true;
+let showLabels = true;
+let timeSpeed = 1;
 
 // -- Card DOM
 const card         = document.getElementById('planet-card');
@@ -279,6 +282,9 @@ const cardDistance = document.getElementById('card-distance');
 const cardDay      = document.getElementById('card-day');
 const cardYear     = document.getElementById('card-year');
 const cardFacts    = document.getElementById('card-facts');
+const cardNav      = document.getElementById('card-nav');
+const cardPrev     = document.getElementById('card-prev');
+const cardNext     = document.getElementById('card-next');
 document.getElementById('card-close').addEventListener('click', backToTop);
 
 // -- Calculator DOM
@@ -330,6 +336,33 @@ function calcAge() {
 calcWeightInput.addEventListener('input', calcWeight);
 calcBirthInput.addEventListener('change', calcAge);
 
+// -- View controls
+const viewControls = document.getElementById('view-controls');
+const btnOrbits    = document.getElementById('ctrl-orbits');
+const btnLabels    = document.getElementById('ctrl-labels');
+const btnRotation  = document.getElementById('ctrl-rotation');
+
+btnOrbits.addEventListener('click', () => {
+  showOrbits = !showOrbits;
+  btnOrbits.classList.toggle('active', showOrbits);
+  btnOrbits.setAttribute('aria-pressed', showOrbits);
+  planets.forEach(p => { p.orbitMesh.visible = showOrbits; });
+});
+
+btnLabels.addEventListener('click', () => {
+  showLabels = !showLabels;
+  btnLabels.classList.toggle('active', showLabels);
+  btnLabels.setAttribute('aria-pressed', showLabels);
+});
+
+btnRotation.addEventListener('click', () => {
+  timeSpeed = timeSpeed > 0 ? 0 : 1;
+  const running = timeSpeed > 0;
+  btnRotation.classList.toggle('active', running);
+  btnRotation.setAttribute('aria-pressed', running);
+  btnRotation.textContent = running ? '▶ Rotação' : '⏸ Rotação';
+});
+
 function showCard(data) {
   currentCardData = data;
   cardName.textContent     = data.name;
@@ -344,6 +377,7 @@ function showCard(data) {
   cardDay.textContent  = data.dayLength;
   cardYear.textContent = data.yearLength;
   cardFacts.innerHTML  = data.facts.map(f => `<li>${f}</li>`).join('');
+  cardNav.classList.toggle('hidden', !activePlanet);
 
   // Moons section
   let moonsSect = document.getElementById('card-moons-section');
@@ -419,6 +453,7 @@ function selectPlanet(p) {
   viewMode = 'front';
   hideCard();
   hoveredPlanet = null;
+  viewControls.classList.add('hidden');
 
   const { x, z } = p.mesh.position;
   const or = p.data.orbitRadius;
@@ -434,10 +469,30 @@ function backToTop() {
   activePlanet = null;
   viewMode = 'top';
   hint.style.opacity = '1';
+  viewControls.classList.remove('hidden');
 
   cam.tgtUp.set(0, 0, -1);
   moveCameraTo(new THREE.Vector3(0, 110, 0), new THREE.Vector3(0, 0, 0));
 }
+
+// -- Sequential navigation
+function navigatePlanet(dir) {
+  if (cam.animating || !activePlanet) return;
+  const idx = planets.indexOf(activePlanet);
+  if (idx === -1) return;
+  selectPlanet(planets[(idx + dir + planets.length) % planets.length]);
+}
+
+cardPrev.addEventListener('click', () => navigatePlanet(-1));
+cardNext.addEventListener('click', () => navigatePlanet(1));
+
+document.addEventListener('keydown', e => {
+  if (viewMode === 'front') {
+    if (e.key === 'ArrowLeft')  navigatePlanet(-1);
+    if (e.key === 'ArrowRight') navigatePlanet(1);
+    if (e.key === 'Escape')     backToTop();
+  }
+});
 
 // -- Raycaster
 const raycaster = new THREE.Raycaster();
@@ -531,7 +586,7 @@ window.addEventListener('resize', () => {
 
 // -- Labels update
 function updateLabels() {
-  const visible = viewMode === 'top' && !cam.animating;
+  const visible = viewMode === 'top' && !cam.animating && showLabels;
   labels.forEach((el, i) => {
     el.style.opacity = visible ? '1' : '0';
     if (!visible) return;
@@ -550,7 +605,7 @@ const clock = new THREE.Clock();
   const dt = clock.getDelta();
   const elapsed = clock.getElapsedTime();
 
-  const mult = viewMode === 'top' ? 1 : 0.06;
+  const mult = viewMode === 'top' ? timeSpeed : 0.06;
   planets.forEach(p => {
     p.angle += p.speed * dt * 60 * mult;
     p.mesh.position.x = Math.cos(p.angle) * p.data.orbitRadius;
