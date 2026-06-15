@@ -1,4 +1,4 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import allBodies from './data/planets.json';
 
 const sunData = allBodies.find(b => b.isStar);
@@ -28,50 +28,66 @@ const cam = {
 };
 
 camera.position.copy(cam.pos);
-camera.up.copy(cam.up); // top-down "north" = -Z
+camera.up.copy(cam.up);
 camera.lookAt(cam.lookAt);
 
 // ── Lights ────────────────────────────────────────────────────────
-scene.add(new THREE.AmbientLight(0x223366, 1.5));
-const sunLight = new THREE.PointLight(0xffffff, 3, 500);
+scene.add(new THREE.AmbientLight(0x0a0a1e, 1.2));
+scene.add(new THREE.HemisphereLight(0x223366, 0x000814, 0.6));
+const sunLight = new THREE.PointLight(0xfff5e0, 4.5, 700);
 scene.add(sunLight);
 
 // ── Stars ─────────────────────────────────────────────────────────
-{
-  const v = new Float32Array(6000 * 3);
-  for (let i = 0; i < v.length; i++) v[i] = (Math.random() - 0.5) * 1400;
+function makeStars(count, spread, size, color) {
+  const v = new Float32Array(count * 3);
+  for (let i = 0; i < v.length; i++) v[i] = (Math.random() - 0.5) * spread;
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(v, 3));
-  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 })));
+  return new THREE.Points(geo, new THREE.PointsMaterial({ color, size, sizeAttenuation: true }));
 }
+scene.add(makeStars(5000, 1800, 0.32, 0xffffff));
+scene.add(makeStars(600,  1800, 0.85, 0xd0e8ff));
+scene.add(makeStars(120,  1600, 1.4,  0xfff0cc));
 
 // ── Sun ───────────────────────────────────────────────────────────
 const sunMesh = new THREE.Mesh(
   new THREE.SphereGeometry(4, 32, 32),
-  new THREE.MeshBasicMaterial({ color: 0xffee55 })
+  new THREE.MeshBasicMaterial({ color: 0xffee44 })
 );
 scene.add(sunMesh);
-// Soft glow corona
-scene.add(new THREE.Mesh(
-  new THREE.SphereGeometry(5.8, 32, 32),
-  new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.1, side: THREE.BackSide })
-));
+
+// Glow layers (innermost → outermost)
+[
+  { r: 5.8, color: 0xffaa00, opacity: 0.18 },
+  { r: 7.5, color: 0xff6600, opacity: 0.08 },
+  { r: 10.5, color: 0xff4400, opacity: 0.04 },
+].forEach(({ r, color, opacity }) => {
+  scene.add(new THREE.Mesh(
+    new THREE.SphereGeometry(r, 32, 32),
+    new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
+  ));
+});
 
 // ── Planets ───────────────────────────────────────────────────────
 const planets = planetBodies.map((data, i) => {
   const startAngle = (i / planetBodies.length) * Math.PI * 2;
-  const vr = Math.max(data.radius * 1.5, 0.65); // min size so small planets are visible
+  const vr = Math.max(data.radius * 1.5, 0.65);
 
   const orbitMesh = new THREE.Mesh(
     new THREE.RingGeometry(data.orbitRadius - 0.1, data.orbitRadius + 0.1, 128),
-    new THREE.MeshBasicMaterial({ color: 0x2a3a55, side: THREE.DoubleSide, transparent: true, opacity: 0.4 })
+    new THREE.MeshBasicMaterial({ color: 0x1e3050, side: THREE.DoubleSide, transparent: true, opacity: 0.5 })
   );
   orbitMesh.rotation.x = Math.PI / 2;
   scene.add(orbitMesh);
 
   const mesh = new THREE.Mesh(
     new THREE.SphereGeometry(vr, 32, 32),
-    new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.75, metalness: 0.05 })
+    new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.7, metalness: 0.0 })
   );
   mesh.position.set(Math.cos(startAngle) * data.orbitRadius, 0, Math.sin(startAngle) * data.orbitRadius);
   scene.add(mesh);
@@ -103,7 +119,7 @@ const labels = planets.map(p => {
   const el = document.createElement('div');
   el.textContent = p.data.name;
   Object.assign(el.style, {
-    position: 'absolute', color: 'rgba(180,220,255,0.85)',
+    position: 'absolute', color: 'rgba(180,220,255,0.9)',
     fontSize: '11px', fontFamily: "'Segoe UI', system-ui, sans-serif",
     pointerEvents: 'none', whiteSpace: 'nowrap',
     textShadow: '0 1px 4px rgba(0,0,0,0.9)', transition: 'opacity 0.4s',
@@ -114,13 +130,14 @@ const labels = planets.map(p => {
 
 // ── Hint ──────────────────────────────────────────────────────────
 const hint = document.createElement('div');
-hint.textContent = 'Clique em um planeta para explorar';
+hint.textContent = 'Clique ou toque em um planeta para explorar';
 Object.assign(hint.style, {
   position: 'absolute', bottom: '1.5rem', left: '50%',
   transform: 'translateX(-50%)',
-  color: 'rgba(160,200,255,0.55)', fontSize: '13px',
+  color: 'rgba(160,200,255,0.5)', fontSize: '13px',
   fontFamily: "'Segoe UI', system-ui, sans-serif",
   pointerEvents: 'none', transition: 'opacity 0.5s',
+  whiteSpace: 'nowrap',
 });
 document.getElementById('app').appendChild(hint);
 
@@ -141,8 +158,8 @@ const cardFacts    = document.getElementById('card-facts');
 document.getElementById('card-close').addEventListener('click', backToTop);
 
 function showCard(data) {
-  cardName.textContent    = data.name;
-  cardDesc.textContent    = data.description;
+  cardName.textContent     = data.name;
+  cardDesc.textContent     = data.description;
   cardDiameter.textContent = data.diameterKm.toLocaleString('pt-BR') + ' km';
   if (data.distanceFromSunMkm) {
     cardDistRow.style.display = '';
@@ -153,15 +170,19 @@ function showCard(data) {
   cardDay.textContent  = data.dayLength;
   cardYear.textContent = data.yearLength;
   cardFacts.innerHTML  = data.facts.map(f => `<li>${f}</li>`).join('');
+  hint.style.opacity = '0';
   card.classList.remove('hidden');
 }
-function hideCard() { card.classList.add('hidden'); }
+
+function hideCard() {
+  card.classList.add('hidden');
+}
 
 // ── Camera animation ──────────────────────────────────────────────
-function moveCameraTo(toPos, toLookAt, toUp, onDone) {
+// tgtUp must be set on cam directly before calling this.
+function moveCameraTo(toPos, toLookAt, onDone) {
   cam.tgtPos.copy(toPos);
   cam.tgtLookAt.copy(toLookAt);
-  cam.tgtUp.copy(toUp);
   cam.animating = true;
   cam.onDone = onDone || null;
 }
@@ -192,7 +213,6 @@ function tickCamera(dt) {
 function selectPlanet(p) {
   activePlanet = p;
   viewMode = 'front';
-  hint.style.opacity = '0';
   hideCard();
 
   const { x, z } = p.mesh.position;
@@ -230,7 +250,6 @@ function trySelect(cx, cy) {
   raycaster.setFromCamera(pointer, camera);
 
   if (viewMode === 'top') {
-    // Check planets first
     const hits = raycaster.intersectObjects(meshList, true);
     if (hits.length) {
       let obj = hits[0].object;
@@ -238,7 +257,6 @@ function trySelect(cx, cy) {
       const p = planets.find(q => q.mesh === obj);
       if (p) { selectPlanet(p); return; }
     }
-    // Check sun
     if (raycaster.intersectObject(sunMesh).length) {
       showCard(sunData);
     }
