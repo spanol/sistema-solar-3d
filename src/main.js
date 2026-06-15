@@ -53,12 +53,35 @@ scene.add(makeStars(5000, 1800, 0.32, 0xffffff));
 scene.add(makeStars(600,  1800, 0.85, 0xd0e8ff));
 scene.add(makeStars(120,  1600, 1.4,  0xfff0cc));
 
+// -- Texture loader
+const textureLoader = new THREE.TextureLoader();
+
+const PLANET_TEXTURES = {
+  sol:     '/textures/2k_sun.jpg',
+  mercury: '/textures/2k_mercury.jpg',
+  venus:   '/textures/2k_venus_surface.jpg',
+  earth:   '/textures/2k_earth_daymap.jpg',
+  mars:    '/textures/2k_mars.jpg',
+  jupiter: '/textures/2k_jupiter.jpg',
+  saturn:  '/textures/2k_saturn.jpg',
+  uranus:  '/textures/2k_uranus.jpg',
+  neptune: '/textures/2k_neptune.jpg',
+};
+
 // -- Sun
+let sunTextureLoaded = false;
 const sunMesh = new THREE.Mesh(
   new THREE.SphereGeometry(4, 32, 32),
   new THREE.MeshBasicMaterial({ color: 0xffee44 })
 );
 scene.add(sunMesh);
+
+textureLoader.load(PLANET_TEXTURES.sol, (tex) => {
+  sunMesh.material.map = tex;
+  sunMesh.material.color.set(0xffffff);
+  sunMesh.material.needsUpdate = true;
+  sunTextureLoaded = true;
+});
 
 [
   { r: 5.8,  color: 0xffaa00, opacity: 0.22 },
@@ -117,6 +140,15 @@ const planets = planetBodies.map((data, i) => {
   mesh.position.set(Math.cos(startAngle) * data.orbitRadius, 0, Math.sin(startAngle) * data.orbitRadius);
   scene.add(mesh);
 
+  const planetTexPath = PLANET_TEXTURES[data.id];
+  if (planetTexPath) {
+    textureLoader.load(planetTexPath, (tex) => {
+      mesh.material.map = tex;
+      mesh.material.color.set(0xffffff);
+      mesh.material.needsUpdate = true;
+    });
+  }
+
   if (data.hasRings) {
     const ringMesh = new THREE.Mesh(
       new THREE.RingGeometry(vr * 1.6, vr * 2.8, 64),
@@ -124,6 +156,11 @@ const planets = planetBodies.map((data, i) => {
     );
     ringMesh.rotation.x = Math.PI / 3;
     mesh.add(ringMesh);
+
+    textureLoader.load('/textures/2k_saturn_ring_alpha.png', (tex) => {
+      ringMesh.material.alphaMap = tex;
+      ringMesh.material.needsUpdate = true;
+    });
   }
 
   return { mesh, data, angle: startAngle, speed: data.orbitSpeed * 0.007, vr };
@@ -199,7 +236,57 @@ const cardYear     = document.getElementById('card-year');
 const cardFacts    = document.getElementById('card-facts');
 document.getElementById('card-close').addEventListener('click', backToTop);
 
+// -- Calculator DOM
+const calcSection      = document.getElementById('card-calculators');
+const calcWeightBlock  = document.getElementById('calc-weight-block');
+const calcAgeBlock     = document.getElementById('calc-age-block');
+const calcTravelBlock  = document.getElementById('calc-travel-block');
+const calcWeightInput  = document.getElementById('calc-weight-input');
+const calcWeightResult = document.getElementById('calc-weight-result');
+const calcBirthInput   = document.getElementById('calc-birth-input');
+const calcAgeResult    = document.getElementById('calc-age-result');
+const calcTravelResult = document.getElementById('calc-travel-result');
+
+// -- Interactive calculators
+const PROBE_SPEED_KMH = 58000;
+let currentCardData = null;
+
+function formatTravelTime(distMkm) {
+  const hours = (distMkm * 1e6) / PROBE_SPEED_KMH;
+  const days  = hours / 24;
+  if (days < 1)   return `~${Math.round(hours)} horas`;
+  if (days < 730) return `~${Math.round(days)} dias`;
+  return `~${(days / 365.25).toFixed(1)} anos`;
+}
+
+function calcWeight() {
+  const kg = parseFloat(calcWeightInput.value);
+  if (!currentCardData || !isFinite(kg) || kg <= 0) { calcWeightResult.textContent = '—'; return; }
+  const gf = currentCardData.gravityFactor;
+  if (!gf) { calcWeightResult.textContent = '—'; return; }
+  calcWeightResult.textContent = (kg * gf).toFixed(1) + ' kg';
+}
+
+function calcAge() {
+  const yld = currentCardData && currentCardData.yearLengthDays;
+  if (!yld) { calcAgeResult.textContent = '—'; return; }
+  const val = calcBirthInput.value;
+  if (!val) { calcAgeResult.textContent = '—'; return; }
+  const ageMs = Date.now() - new Date(val).getTime();
+  if (ageMs < 0) { calcAgeResult.textContent = '—'; return; }
+  const planetYears = (ageMs / 86400000) / yld;
+  calcAgeResult.textContent = planetYears >= 10
+    ? `${Math.round(planetYears)} anos`
+    : planetYears >= 1
+    ? `${planetYears.toFixed(1)} anos`
+    : `${planetYears.toFixed(2)} anos`;
+}
+
+calcWeightInput.addEventListener('input', calcWeight);
+calcBirthInput.addEventListener('change', calcAge);
+
 function showCard(data) {
+  currentCardData = data;
   cardName.textContent     = data.name;
   cardDesc.textContent     = data.description;
   cardDiameter.textContent = data.diameterKm.toLocaleString('pt-BR') + ' km';
@@ -212,6 +299,21 @@ function showCard(data) {
   cardDay.textContent  = data.dayLength;
   cardYear.textContent = data.yearLength;
   cardFacts.innerHTML  = data.facts.map(f => `<li>${f}</li>`).join('');
+
+  // Calculadoras
+  const hasGravity = typeof data.gravityFactor === 'number';
+  const hasYear    = typeof data.yearLengthDays === 'number';
+  const hasDist    = data.distanceFromSunMkm > 0;
+  calcSection.classList.toggle('hidden', !hasGravity && !hasYear && !hasDist);
+  calcWeightBlock.style.display = hasGravity ? '' : 'none';
+  calcAgeBlock.style.display    = hasYear    ? '' : 'none';
+  calcTravelBlock.style.display = hasDist    ? '' : 'none';
+  calcWeightResult.textContent  = '—';
+  calcAgeResult.textContent     = '—';
+  if (hasDist) calcTravelResult.textContent = formatTravelTime(data.distanceFromSunMkm);
+  calcWeight();
+  calcAge();
+
   hint.style.opacity = '0';
   card.classList.remove('hidden');
 }
@@ -404,7 +506,12 @@ const clock = new THREE.Clock();
     camera.lookAt(cam.lookAt);
   }
 
-  sunMesh.material.color.setHSL(0.12, 1, 0.5 + Math.sin(elapsed * 2) * 0.04);
+  if (sunTextureLoaded) {
+    // subtle warm pulse on texture
+    sunMesh.material.color.setHSL(0.10, 0.35, 0.90 + Math.sin(elapsed * 2) * 0.06);
+  } else {
+    sunMesh.material.color.setHSL(0.12, 1, 0.5 + Math.sin(elapsed * 2) * 0.04);
+  }
 
   // Hover ring follows hovered planet with pulsing opacity
   if (viewMode === 'top' && hoveredPlanet && !cam.animating) {
