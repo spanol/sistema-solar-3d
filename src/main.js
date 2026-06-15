@@ -43,6 +43,9 @@ scene.add(new THREE.AmbientLight(0x111133, 2.0));
 scene.add(new THREE.HemisphereLight(0x223366, 0x000814, 0.8));
 const sunLight = new THREE.PointLight(0xfff5e0, 2.5, 0, 0);
 scene.add(sunLight);
+// fill light that follows camera in front view (camera sits on the dark side of the planet)
+const fillLight = new THREE.PointLight(0xfff8f0, 0, 0, 0);
+scene.add(fillLight);
 
 // -- Stars
 function makeStars(count, spread, size, color) {
@@ -483,7 +486,7 @@ function selectPlanet(p) {
   const { x, z } = p.group.position;
   const or = p.data.orbitRadius;
   const camDist = p.vr * 8 + 10;
-  const camPos = new THREE.Vector3(x + (x / or) * camDist, 3, z + (z / or) * camDist);
+  const camPos = new THREE.Vector3(x - (x / or) * camDist, 3, z - (z / or) * camDist);
 
   cam.tgtUp.set(0, 1, 0);
   moveCameraTo(camPos, new THREE.Vector3(x, 0, z), () => showCard(p.data));
@@ -689,6 +692,14 @@ const clock = new THREE.Clock();
   }
 
   updateLabels();
+
+  // fill light tracks camera so the planet face visible to the viewer stays lit
+  if (viewMode === 'front') {
+    fillLight.position.copy(camera.position);
+    fillLight.intensity = 3.0;
+  } else {
+    fillLight.intensity = 0;
+  }
 
   if (composer) {
     composer.render();
