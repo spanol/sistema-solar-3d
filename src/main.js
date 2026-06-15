@@ -268,6 +268,25 @@ function backToTop() {
   moveCameraTo(new THREE.Vector3(0, 110, 0), new THREE.Vector3(0, 0, 0));
 }
 
+// ── Sequential navigation ─────────────────────────────────────────
+function navigatePlanet(dir) {
+  if (cam.animating || !activePlanet) return;
+  const idx = planets.indexOf(activePlanet);
+  if (idx === -1) return;
+  selectPlanet(planets[(idx + dir + planets.length) % planets.length]);
+}
+
+cardPrev.addEventListener('click', () => navigatePlanet(-1));
+cardNext.addEventListener('click', () => navigatePlanet(1));
+
+document.addEventListener('keydown', e => {
+  if (viewMode === 'front') {
+    if (e.key === 'ArrowLeft')  navigatePlanet(-1);
+    if (e.key === 'ArrowRight') navigatePlanet(1);
+    if (e.key === 'Escape')     backToTop();
+  }
+});
+
 // ── Raycaster ─────────────────────────────────────────────────────
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();

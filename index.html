@@ -44,6 +44,31 @@
         </div>
         <p class="card-section-label">Curiosidades</p>
         <ul id="card-facts"></ul>
+
+        <div id="card-calculators">
+          <p class="card-section-label">Calculadoras</p>
+          <div class="calc-block" id="calc-weight-block">
+            <div class="calc-label">Peso neste corpo</div>
+            <div class="calc-row">
+              <input type="number" id="calc-weight-input" min="1" max="999" step="1" placeholder="seu peso (kg)" class="calc-input" />
+              <span class="calc-arrow">→</span>
+              <span class="calc-result" id="calc-weight-result">—</span>
+            </div>
+          </div>
+          <div class="calc-block" id="calc-age-block">
+            <div class="calc-label">Sua idade neste planeta</div>
+            <div class="calc-row">
+              <input type="date" id="calc-birth-input" class="calc-input calc-input-date" />
+              <span class="calc-arrow">→</span>
+              <span class="calc-result" id="calc-age-result">—</span>
+            </div>
+          </div>
+          <div class="calc-block" id="calc-travel-block">
+            <div class="calc-label">Tempo de viagem a 58.000 km/h</div>
+            <div class="calc-result-travel" id="calc-travel-result">—</div>
+          </div>
+        </div>
+
         <div id="card-nav">
           <button id="card-prev" aria-label="Planeta anterior">&#8592; Anterior</button>
           <button id="card-next" aria-label="Próximo planeta">Próximo &#8594;</button>
