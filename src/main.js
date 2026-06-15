@@ -1,187 +1,231 @@
-import * as THREE from 'three';
-import allBodies from './data/planets.json';
+﻿import * as THREE from 'three';
+import planetsData from './data/planets.json';
 
-const solData = allBodies.find((b) => b.isStar);
-const planetsData = allBodies.filter((b) => !b.isStar);
-
-// ── Scene bootstrap ──────────────────────────────────────────────
+// ── Renderer ─────────────────────────────────────────────────────
 const canvas = document.getElementById('solar-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 
+// ── Scene ─────────────────────────────────────────────────────────
 const scene = new THREE.Scene();
 
-// Starfield background
-const starGeo = new THREE.BufferGeometry();
-const starCount = 2000;
-const positions = new Float32Array(starCount * 3);
-// Deterministic pseudo-random via LCG so no Math.random() surprises
-let seed = 1234567;
-function lcg() { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return (seed >>> 0) / 0xffffffff; }
-for (let i = 0; i < starCount * 3; i++) positions[i] = (lcg() - 0.5) * 400;
-starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.25 })));
+// ── Camera ────────────────────────────────────────────────────────
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
 
-// ── Camera ───────────────────────────────────────────────────────
-const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
-const TOP_POS = new THREE.Vector3(0, 80, 0);
-const TOP_LOOK = new THREE.Vector3(0, 0, 0);
-camera.position.copy(TOP_POS);
-camera.lookAt(TOP_LOOK);
+// Separate pos/lookAt from their animation targets
+const cam = {
+  pos:       new THREE.Vector3(0, 110, 0),
+  lookAt:    new THREE.Vector3(0, 0, 0),
+  tgtPos:    new THREE.Vector3(0, 110, 0),
+  tgtLookAt: new THREE.Vector3(0, 0, 0),
+  animating: false,
+  onDone: null,
+};
 
-// ── Lighting ─────────────────────────────────────────────────────
-scene.add(new THREE.AmbientLight(0xffffff, 0.18));
-const sunLight = new THREE.PointLight(0xfff4e0, 3, 300);
+camera.position.copy(cam.pos);
+camera.up.set(0, 0, -1); // top-down "north" = -Z
+camera.lookAt(cam.lookAt);
+
+// ── Lights ────────────────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0x223366, 1.5));
+const sunLight = new THREE.PointLight(0xffffff, 3, 500);
 scene.add(sunLight);
 
-// ── Sun ──────────────────────────────────────────────────────────
+// ── Stars ─────────────────────────────────────────────────────────
+{
+  const v = new Float32Array(6000 * 3);
+  for (let i = 0; i < v.length; i++) v[i] = (Math.random() - 0.5) * 1400;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(v, 3));
+  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 })));
+}
+
+// ── Sun ───────────────────────────────────────────────────────────
 const sunMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(3.5, 32, 32),
-  new THREE.MeshStandardMaterial({
-    color: 0xffcc00,
-    emissive: 0xffaa00,
-    emissiveIntensity: 1.2,
-    roughness: 1,
-    metalness: 0,
-  })
+  new THREE.SphereGeometry(4, 32, 32),
+  new THREE.MeshBasicMaterial({ color: 0xffee55 })
 );
-sunMesh.userData = { planet: solData, angle: 0, isStar: true };
 scene.add(sunMesh);
+scene.add(new THREE.Mesh(
+  new THREE.SphereGeometry(5.8, 32, 32),
+  new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.1, side: THREE.BackSide })
+));
 
-// Soft corona halo (sprite-free billboard ring)
-const haloGeo = new THREE.RingGeometry(3.6, 5.8, 64);
-const haloMat = new THREE.MeshBasicMaterial({
-  color: 0xffdd55,
-  side: THREE.DoubleSide,
-  transparent: true,
-  opacity: 0.12,
-  depthWrite: false,
-});
-const haloMesh = new THREE.Mesh(haloGeo, haloMat);
-scene.add(haloMesh);
+// ── Planets ───────────────────────────────────────────────────────
+const planets = planetsData.map((data, i) => {
+  const startAngle = (i / planetsData.length) * Math.PI * 2;
+  const vr = Math.max(data.radius * 1.5, 0.65);
 
-// ── Planets ──────────────────────────────────────────────────────
-const planetMeshes = [];
-// Spread initial angles evenly so planets aren't clumped
-const angleStep = (Math.PI * 2) / planetsData.length;
+  const orbitMesh = new THREE.Mesh(
+    new THREE.RingGeometry(data.orbitRadius - 0.1, data.orbitRadius + 0.1, 128),
+    new THREE.MeshBasicMaterial({ color: 0x2a3a55, side: THREE.DoubleSide, transparent: true, opacity: 0.4 })
+  );
+  orbitMesh.rotation.x = Math.PI / 2;
+  scene.add(orbitMesh);
 
-planetsData.forEach((p, i) => {
-  // Orbit ring
-  const orbitGeo = new THREE.RingGeometry(p.orbitRadius - 0.06, p.orbitRadius + 0.06, 128);
-  const orbitMat = new THREE.MeshBasicMaterial({ color: 0x3a5080, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
-  const orbitLine = new THREE.Mesh(orbitGeo, orbitMat);
-  orbitLine.rotation.x = -Math.PI / 2;
-  scene.add(orbitLine);
-
-  // Planet sphere
-  const geo = new THREE.SphereGeometry(p.radius, 32, 32);
-  const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.75, metalness: 0.05 });
-  const mesh = new THREE.Mesh(geo, mat);
-  const startAngle = angleStep * i;
-  mesh.position.set(Math.cos(startAngle) * p.orbitRadius, 0, Math.sin(startAngle) * p.orbitRadius);
-  mesh.userData = { planet: p, angle: startAngle };
+  const mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(vr, 32, 32),
+    new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.75, metalness: 0.05 })
+  );
+  mesh.position.set(Math.cos(startAngle) * data.orbitRadius, 0, Math.sin(startAngle) * data.orbitRadius);
   scene.add(mesh);
-  planetMeshes.push(mesh);
 
-  // Saturn rings
-  if (p.hasRings) {
-    const ringGeo = new THREE.RingGeometry(p.radius * 1.4, p.radius * 2.2, 64);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0xc8b87a, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI / 3;
-    mesh.add(ring);
+  if (data.hasRings) {
+    const ringMesh = new THREE.Mesh(
+      new THREE.RingGeometry(vr * 1.6, vr * 2.8, 64),
+      new THREE.MeshBasicMaterial({ color: 0xcab96a, side: THREE.DoubleSide, transparent: true, opacity: 0.7 })
+    );
+    ringMesh.rotation.x = Math.PI / 3;
+    mesh.add(ringMesh);
   }
+
+  return { mesh, data, angle: startAngle, speed: data.orbitSpeed * 0.007, vr };
 });
 
-// ── Card UI ──────────────────────────────────────────────────────
-const card = document.getElementById('planet-card');
-const cardName = document.getElementById('card-name');
-const cardDesc = document.getElementById('card-description');
+const meshList = planets.map(p => p.mesh);
+
+// ── Planet Labels ─────────────────────────────────────────────────
+const labelWrap = document.createElement('div');
+Object.assign(labelWrap.style, {
+  position: 'absolute', top: '0', left: '0',
+  width: '100%', height: '100%',
+  pointerEvents: 'none', overflow: 'hidden',
+});
+document.getElementById('app').appendChild(labelWrap);
+
+const labels = planets.map(p => {
+  const el = document.createElement('div');
+  el.textContent = p.data.name;
+  Object.assign(el.style, {
+    position: 'absolute', color: 'rgba(180,220,255,0.85)',
+    fontSize: '11px', fontFamily: "'Segoe UI', system-ui, sans-serif",
+    pointerEvents: 'none', whiteSpace: 'nowrap',
+    textShadow: '0 1px 4px rgba(0,0,0,0.9)', transition: 'opacity 0.4s',
+  });
+  labelWrap.appendChild(el);
+  return el;
+});
+
+// ── Hint ──────────────────────────────────────────────────────────
+const hint = document.createElement('div');
+hint.textContent = 'Clique em um planeta para explorar';
+Object.assign(hint.style, {
+  position: 'absolute', bottom: '1.5rem', left: '50%',
+  transform: 'translateX(-50%)',
+  color: 'rgba(160,200,255,0.55)', fontSize: '13px',
+  fontFamily: "'Segoe UI', system-ui, sans-serif",
+  pointerEvents: 'none', transition: 'opacity 0.5s',
+});
+document.getElementById('app').appendChild(hint);
+
+// ── State ─────────────────────────────────────────────────────────
+let viewMode = 'top';
+let activePlanet = null;
+
+// ── Card DOM ──────────────────────────────────────────────────────
+const card      = document.getElementById('planet-card');
+const cardName  = document.getElementById('card-name');
+const cardDesc  = document.getElementById('card-description');
 const cardFacts = document.getElementById('card-facts');
-const cardClose = document.getElementById('card-close');
+document.getElementById('card-close').addEventListener('click', backToTop);
 
-let selectedPlanet = null;
-let isAnimatingCamera = false;
-let animT = 0;
-const ANIM_DURATION = 1.2;
-
-const camFrom = new THREE.Vector3();
-const camTo = new THREE.Vector3();
-const lookFrom = new THREE.Vector3();
-const lookTo = new THREE.Vector3();
-const camTarget = new THREE.Vector3(); // tracks current look-at point
-
-function showCard(planetData) {
-  cardName.textContent = planetData.name;
-  cardDesc.textContent = planetData.description;
-  cardFacts.innerHTML = planetData.facts.map((f) => `<li>${f}</li>`).join('');
+function showCard(p) {
+  cardName.textContent = p.data.name;
+  cardDesc.textContent = p.data.description;
+  cardFacts.innerHTML = p.data.facts.map(f => `<li>${f}</li>`).join('');
   card.classList.remove('hidden');
 }
+function hideCard() { card.classList.add('hidden'); }
 
-function hideCard() {
-  card.classList.add('hidden');
+// ── Camera animation ──────────────────────────────────────────────
+function moveCameraTo(toPos, toLookAt, onDone) {
+  cam.tgtPos.copy(toPos);
+  cam.tgtLookAt.copy(toLookAt);
+  cam.animating = true;
+  cam.onDone = onDone || null;
 }
 
-function startCameraAnim(toCamPos, toLookAt) {
-  camFrom.copy(camera.position);
-  lookFrom.copy(camTarget); // current look-at, not camera position
-  camTo.copy(toCamPos);
-  lookTo.copy(toLookAt);
-  isAnimatingCamera = true;
-  animT = 0;
-}
-
-function selectPlanet(mesh) {
-  selectedPlanet = mesh;
-  const p = mesh.userData.planet;
-
-  const planetPos = mesh.position.clone();
-  // Place camera in the outward radial direction from Sun, at planet height
-  const radialDir = new THREE.Vector3(Math.cos(mesh.userData.angle), 0, Math.sin(mesh.userData.angle)).normalize();
-  const targetCamPos = planetPos.clone().addScaledVector(radialDir, p.radius * 6 + 5);
-  targetCamPos.y = p.radius * 0.5; // slight elevation so planet reads well
-
-  startCameraAnim(targetCamPos, planetPos);
-  showCard(p);
-}
-
-function deselectPlanet() {
-  selectedPlanet = null;
-  startCameraAnim(TOP_POS, TOP_LOOK);
-  hideCard();
-}
-
-cardClose.addEventListener('click', deselectPlanet);
-
-// ── Raycasting / click ───────────────────────────────────────────
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-canvas.addEventListener('click', (e) => {
-  if (isAnimatingCamera) return;
-  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const hits = raycaster.intersectObjects([sunMesh, ...planetMeshes]);
-  if (hits.length > 0) {
-    const obj = hits[0].object;
-    if (obj.userData.isStar) {
-      showCard(obj.userData.planet);
-    } else {
-      selectPlanet(obj);
-    }
+function tickCamera(dt) {
+  if (!cam.animating) return;
+  const k = Math.min(1, dt * 2.6);
+  cam.pos.lerp(cam.tgtPos, k);
+  cam.lookAt.lerp(cam.tgtLookAt, k);
+  camera.position.copy(cam.pos);
+  camera.lookAt(cam.lookAt);
+  if (cam.pos.distanceTo(cam.tgtPos) < 0.3) {
+    cam.pos.copy(cam.tgtPos);
+    cam.lookAt.copy(cam.tgtLookAt);
+    camera.position.copy(cam.pos);
+    camera.lookAt(cam.lookAt);
+    cam.animating = false;
+    const cb = cam.onDone; cam.onDone = null;
+    if (cb) cb();
   }
+}
+
+// ── Selection / back ──────────────────────────────────────────────
+function selectPlanet(p) {
+  activePlanet = p;
+  viewMode = 'front';
+  hint.style.opacity = '0';
+  hideCard();
+  camera.up.set(0, 1, 0);
+
+  const { x, z } = p.mesh.position;
+  const or = p.data.orbitRadius;
+  const camDist = p.vr * 8 + 10;
+  const camPos = new THREE.Vector3(x + (x / or) * camDist, 3, z + (z / or) * camDist);
+
+  moveCameraTo(camPos, new THREE.Vector3(x, 0, z), () => showCard(p));
+}
+
+function backToTop() {
+  hideCard();
+  activePlanet = null;
+  viewMode = 'top';
+  hint.style.opacity = '1';
+  camera.up.set(0, 0, -1);
+
+  moveCameraTo(new THREE.Vector3(0, 110, 0), new THREE.Vector3(0, 0, 0), null);
+}
+
+// ── Raycaster ─────────────────────────────────────────────────────
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+function setPointer(cx, cy) {
+  const r = canvas.getBoundingClientRect();
+  pointer.x =  ((cx - r.left) / r.width)  * 2 - 1;
+  pointer.y = -((cy - r.top)  / r.height) * 2 + 1;
+}
+
+function trySelect(cx, cy) {
+  if (viewMode !== 'top' || cam.animating) return;
+  setPointer(cx, cy);
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(meshList, true);
+  if (!hits.length) return;
+  let obj = hits[0].object;
+  while (obj.parent && !meshList.includes(obj)) obj = obj.parent;
+  const p = planets.find(q => q.mesh === obj);
+  if (p) selectPlanet(p);
+}
+
+canvas.addEventListener('click', e => trySelect(e.clientX, e.clientY));
+
+canvas.addEventListener('mousemove', e => {
+  if (viewMode !== 'top' || cam.animating) { canvas.style.cursor = 'default'; return; }
+  setPointer(e.clientX, e.clientY);
+  raycaster.setFromCamera(pointer, camera);
+  canvas.style.cursor = raycaster.intersectObjects(meshList, true).length ? 'pointer' : 'default';
 });
 
-// Cursor feedback
-canvas.addEventListener('mousemove', (e) => {
-  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const hits = raycaster.intersectObjects([sunMesh, ...planetMeshes]);
-  canvas.style.cursor = hits.length > 0 ? 'pointer' : 'default';
-});
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  trySelect(t.clientX, t.clientY);
+}, { passive: false });
 
 // ── Resize ────────────────────────────────────────────────────────
 window.addEventListener('resize', () => {
@@ -190,54 +234,45 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ── Animate ───────────────────────────────────────────────────────
+// ── Labels update ─────────────────────────────────────────────────
+function updateLabels() {
+  const visible = viewMode === 'top' && !cam.animating;
+  labels.forEach((el, i) => {
+    el.style.opacity = visible ? '1' : '0';
+    if (!visible) return;
+    const v = planets[i].mesh.position.clone().project(camera);
+    el.style.left = `${(v.x * 0.5 + 0.5) * window.innerWidth}px`;
+    el.style.top  = `${(-v.y * 0.5 + 0.5) * window.innerHeight + 14}px`;
+    el.style.transform = 'translateX(-50%)';
+  });
+}
+
+// ── Animation loop ────────────────────────────────────────────────
 const clock = new THREE.Clock();
 
-function easeInOut(t) {
-  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-}
-
-function animate() {
+(function animate() {
   requestAnimationFrame(animate);
-  const delta = clock.getDelta();
+  const dt = clock.getDelta();
   const elapsed = clock.getElapsedTime();
 
-  // Orbit planets
-  planetMeshes.forEach((mesh) => {
-    const p = mesh.userData.planet;
-    mesh.userData.angle += p.orbitSpeed * delta * 0.15;
-    mesh.position.x = Math.cos(mesh.userData.angle) * p.orbitRadius;
-    mesh.position.z = Math.sin(mesh.userData.angle) * p.orbitRadius;
-    mesh.rotation.y += delta * 0.3;
+  const mult = viewMode === 'top' ? 1 : 0.06;
+  planets.forEach(p => {
+    p.angle += p.speed * dt * 60 * mult;
+    p.mesh.position.x = Math.cos(p.angle) * p.data.orbitRadius;
+    p.mesh.position.z = Math.sin(p.angle) * p.data.orbitRadius;
+    p.mesh.rotation.y += dt * 0.2;
   });
 
-  // Camera transition
-  if (isAnimatingCamera) {
-    animT += delta / ANIM_DURATION;
-    if (animT >= 1) {
-      animT = 1;
-      isAnimatingCamera = false;
-    }
-    const t = easeInOut(animT);
-    camera.position.lerpVectors(camFrom, camTo, t);
-    camTarget.lerpVectors(lookFrom, lookTo, t);
-    camera.lookAt(camTarget);
+  if (cam.animating) {
+    tickCamera(dt);
+  } else if (viewMode === 'front' && activePlanet) {
+    cam.lookAt.lerp(activePlanet.mesh.position, 0.04);
+    camera.lookAt(cam.lookAt);
+  } else {
+    camera.lookAt(cam.lookAt);
   }
 
-  // Track selected planet as it orbits
-  if (selectedPlanet && !isAnimatingCamera) {
-    camTarget.copy(selectedPlanet.position);
-    camera.lookAt(camTarget);
-  }
-
-  // Sun pulse
-  sunMesh.material.emissiveIntensity = 1.1 + Math.sin(elapsed * 1.5) * 0.15;
-  haloMesh.material.opacity = 0.10 + Math.sin(elapsed * 2) * 0.025;
-
-  // Halo always faces camera (billboard)
-  haloMesh.quaternion.copy(camera.quaternion);
-
+  sunMesh.material.color.setHSL(0.12, 1, 0.5 + Math.sin(elapsed * 2) * 0.04);
+  updateLabels();
   renderer.render(scene, camera);
-}
-
-animate();
+})();
