@@ -9,6 +9,18 @@
   <body>
     <div id="app">
       <canvas id="solar-canvas"></canvas>
+      <div id="view-controls">
+        <button id="ctrl-orbits" class="ctrl-toggle active" aria-pressed="true">⊙ Órbitas</button>
+        <button id="ctrl-labels" class="ctrl-toggle active" aria-pressed="true">◉ Labels</button>
+        <div class="ctrl-speed">
+          <div class="ctrl-speed-row">
+            <span>Velocidade</span>
+            <span id="ctrl-speed-val">1×</span>
+          </div>
+          <input type="range" id="ctrl-speed-slider" min="0" max="5" step="0.1" value="1">
+        </div>
+      </div>
+
       <div id="planet-card" class="hidden">
         <h2 id="card-name"></h2>
         <p id="card-description"></p>
@@ -32,6 +44,10 @@
         </div>
         <p class="card-section-label">Curiosidades</p>
         <ul id="card-facts"></ul>
+        <div id="card-nav">
+          <button id="card-prev" aria-label="Planeta anterior">&#8592; Anterior</button>
+          <button id="card-next" aria-label="Próximo planeta">Próximo &#8594;</button>
+        </div>
         <button id="card-close">← Voltar</button>
       </div>
     </div>

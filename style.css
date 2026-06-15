@@ -176,8 +176,140 @@ html, body {
   outline-offset: 2px;
 }
 
+/* ── View controls panel ────────────────────────────────────────── */
+#view-controls {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  z-index: 10;
+  width: 148px;
+  transition: opacity 0.3s ease;
+}
+
+#view-controls.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ctrl-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(5, 8, 18, 0.82);
+  border: 1px solid var(--card-border);
+  color: var(--card-muted);
+  padding: 0.48rem 0.7rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+  min-height: 38px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  text-align: left;
+}
+
+.ctrl-toggle.active {
+  color: var(--card-text);
+  border-color: rgba(79, 163, 224, 0.38);
+}
+
+.ctrl-toggle:hover {
+  background: rgba(79, 163, 224, 0.1);
+  border-color: rgba(79, 163, 224, 0.35);
+}
+
+.ctrl-toggle:focus-visible {
+  outline: 2px solid var(--card-accent);
+  outline-offset: 2px;
+}
+
+.ctrl-speed {
+  background: rgba(5, 8, 18, 0.82);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.ctrl-speed-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--card-muted);
+  margin-bottom: 0.4rem;
+}
+
+#ctrl-speed-val {
+  color: var(--card-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+#ctrl-speed-slider {
+  width: 100%;
+  accent-color: var(--card-accent);
+  cursor: pointer;
+  height: 4px;
+}
+
+/* ── Card nav (Anterior / Próximo) ─────────────────────────────── */
+#card-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+#card-prev,
+#card-next {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--card-accent);
+  padding: 0.5rem 0.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+  min-height: 40px;
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+#card-prev:hover,
+#card-next:hover {
+  background: rgba(79, 163, 224, 0.12);
+  border-color: rgba(79, 163, 224, 0.45);
+}
+
+#card-prev:focus-visible,
+#card-next:focus-visible {
+  outline: 2px solid var(--card-accent);
+  outline-offset: 2px;
+}
+
+#card-nav.hidden {
+  display: none;
+}
+
 /* ── Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
+  #view-controls {
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 132px;
+  }
+
+  .ctrl-toggle {
+    font-size: 0.78rem;
+    min-height: 34px;
+    padding: 0.4rem 0.6rem;
+  }
+
   #planet-card {
     top: auto;
     bottom: 0;
