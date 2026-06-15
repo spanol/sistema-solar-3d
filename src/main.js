@@ -129,25 +129,38 @@ let viewMode = 'top';
 let activePlanet = null;
 
 // ── Card DOM ──────────────────────────────────────────────────────
-const card      = document.getElementById('planet-card');
-const cardName  = document.getElementById('card-name');
-const cardDesc  = document.getElementById('card-description');
-const cardFacts = document.getElementById('card-facts');
+const card         = document.getElementById('planet-card');
+const cardName     = document.getElementById('card-name');
+const cardDesc     = document.getElementById('card-description');
+const cardDiameter = document.getElementById('card-diameter');
+const cardDistRow  = document.getElementById('card-distance-row');
+const cardDistance = document.getElementById('card-distance');
+const cardDay      = document.getElementById('card-day');
+const cardYear     = document.getElementById('card-year');
+const cardFacts    = document.getElementById('card-facts');
 document.getElementById('card-close').addEventListener('click', backToTop);
 
 function showCard(data) {
-  cardName.textContent = data.name;
-  cardDesc.textContent = data.description;
-  cardFacts.innerHTML = data.facts.map(f => `<li>${f}</li>`).join('');
+  cardName.textContent    = data.name;
+  cardDesc.textContent    = data.description;
+  cardDiameter.textContent = data.diameterKm.toLocaleString('pt-BR') + ' km';
+  if (data.distanceFromSunMkm) {
+    cardDistRow.style.display = '';
+    cardDistance.textContent  = data.distanceFromSunMkm.toLocaleString('pt-BR') + ' M km';
+  } else {
+    cardDistRow.style.display = 'none';
+  }
+  cardDay.textContent  = data.dayLength;
+  cardYear.textContent = data.yearLength;
+  cardFacts.innerHTML  = data.facts.map(f => `<li>${f}</li>`).join('');
   card.classList.remove('hidden');
 }
 function hideCard() { card.classList.add('hidden'); }
 
 // ── Camera animation ──────────────────────────────────────────────
-function moveCameraTo(toPos, toLookAt, toUp, onDone) {
+function moveCameraTo(toPos, toLookAt, onDone) {
   cam.tgtPos.copy(toPos);
   cam.tgtLookAt.copy(toLookAt);
-  cam.tgtUp.copy(toUp);
   cam.animating = true;
   cam.onDone = onDone || null;
 }
@@ -186,7 +199,8 @@ function selectPlanet(p) {
   const camDist = p.vr * 8 + 10;
   const camPos = new THREE.Vector3(x + (x / or) * camDist, 3, z + (z / or) * camDist);
 
-  moveCameraTo(camPos, new THREE.Vector3(x, 0, z), new THREE.Vector3(0, 1, 0), () => showCard(p.data));
+  cam.tgtUp.set(0, 1, 0);
+  moveCameraTo(camPos, new THREE.Vector3(x, 0, z), () => showCard(p.data));
 }
 
 function backToTop() {
@@ -195,7 +209,8 @@ function backToTop() {
   viewMode = 'top';
   hint.style.opacity = '1';
 
-  moveCameraTo(new THREE.Vector3(0, 110, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1), null);
+  cam.tgtUp.set(0, 0, -1);
+  moveCameraTo(new THREE.Vector3(0, 110, 0), new THREE.Vector3(0, 0, 0), null);
 }
 
 // ── Raycaster ─────────────────────────────────────────────────────
