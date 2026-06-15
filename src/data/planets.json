@@ -14,6 +14,7 @@
     "relativeSize": 3.5,
     "orbitRadius": 0,
     "orbitSpeed": 0,
+    "axialTilt": 7.25,
     "facts": [
       "O Sol contém 99,86% de toda a massa do Sistema Solar.",
       "Sua temperatura superficial é ~5.500 °C, mas a coroa chega a 1 milhão °C.",
@@ -35,6 +36,7 @@
     "relativeSize": 0.38,
     "orbitRadius": 8,
     "orbitSpeed": 4.15,
+    "axialTilt": 0.034,
     "facts": [
       "Um dia em Mercúrio dura 59 dias terrestres — mais que seu próprio ano.",
       "Temperatura varia de −180 °C à noite a +430 °C de dia.",
@@ -56,6 +58,7 @@
     "relativeSize": 0.95,
     "orbitRadius": 12,
     "orbitSpeed": 1.62,
+    "axialTilt": 177.4,
     "facts": [
       "Temperatura superficial média de 465 °C — mais quente que Mercúrio.",
       "Gira ao contrário em relação à maioria dos planetas; o Sol nasce no oeste.",
@@ -77,6 +80,7 @@
     "relativeSize": 1,
     "orbitRadius": 16,
     "orbitSpeed": 1,
+    "axialTilt": 23.44,
     "moons": [
       { "id": "moon", "name": "Lua", "color": "#c0bdb0", "radius": 0.35, "orbitRadius": 3.5, "orbitSpeed": 1.0 }
     ],
@@ -101,6 +105,7 @@
     "relativeSize": 0.53,
     "orbitRadius": 21,
     "orbitSpeed": 0.53,
+    "axialTilt": 25.19,
     "moons": [
       { "id": "phobos", "name": "Fobos", "color": "#9a8070", "radius": 0.18, "orbitRadius": 1.8, "orbitSpeed": 3.5 },
       { "id": "deimos", "name": "Deimos", "color": "#8a7868", "radius": 0.15, "orbitRadius": 2.8, "orbitSpeed": 1.8 }
@@ -126,6 +131,7 @@
     "relativeSize": 2.5,
     "orbitRadius": 30,
     "orbitSpeed": 0.084,
+    "axialTilt": 3.13,
     "moons": [
       { "id": "io", "name": "Io", "color": "#e8d060", "radius": 0.45, "orbitRadius": 6.0, "orbitSpeed": 3.5 },
       { "id": "europa", "name": "Europa", "color": "#d4c8b8", "radius": 0.38, "orbitRadius": 9.0, "orbitSpeed": 2.2 },
@@ -153,6 +159,7 @@
     "relativeSize": 2.1,
     "orbitRadius": 40,
     "orbitSpeed": 0.034,
+    "axialTilt": 26.73,
     "hasRings": true,
     "moons": [
       { "id": "titan", "name": "Titã", "color": "#d4a050", "radius": 0.52, "orbitRadius": 12.0, "orbitSpeed": 1.0 }
@@ -178,6 +185,7 @@
     "relativeSize": 1.6,
     "orbitRadius": 50,
     "orbitSpeed": 0.012,
+    "axialTilt": 97.77,
     "facts": [
       "Inclinação axial de 97,8° — praticamente de lado, como se estivesse rolando.",
       "Temperatura mínima de −224 °C, o mais frio do Sistema Solar.",
@@ -199,6 +207,7 @@
     "relativeSize": 1.55,
     "orbitRadius": 60,
     "orbitSpeed": 0.006,
+    "axialTilt": 28.32,
     "facts": [
       "Netuno tem os ventos mais rápidos do Sistema Solar — chegando a 2.100 km/h.",
       "Desde sua descoberta em 1846, completou apenas uma volta ao Sol (em 2011).",

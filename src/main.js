@@ -125,6 +125,7 @@ textureLoader.load(PLANET_TEXTURES.sol, (tex) => {
 const planets = planetBodies.map((data, i) => {
   const startAngle = (i / planetBodies.length) * Math.PI * 2;
   const vr = Math.max(data.radius * 1.5, 0.65);
+  const tiltRad = THREE.MathUtils.degToRad(data.axialTilt || 0);
 
   const orbitMesh = new THREE.Mesh(
     new THREE.RingGeometry(data.orbitRadius - 0.1, data.orbitRadius + 0.1, 128),
@@ -133,12 +134,21 @@ const planets = planetBodies.map((data, i) => {
   orbitMesh.rotation.x = Math.PI / 2;
   scene.add(orbitMesh);
 
+  // Orbit group: moves around the sun, holds tiltGroup at origin
+  const group = new THREE.Group();
+  group.position.set(Math.cos(startAngle) * data.orbitRadius, 0, Math.sin(startAngle) * data.orbitRadius);
+  scene.add(group);
+
+  // Tilt group: applies axial tilt via Z rotation; does not spin
+  const tiltGroup = new THREE.Group();
+  tiltGroup.rotation.z = tiltRad;
+  group.add(tiltGroup);
+
   const mesh = new THREE.Mesh(
     new THREE.SphereGeometry(vr, 32, 32),
     new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.7, metalness: 0.0 })
   );
-  mesh.position.set(Math.cos(startAngle) * data.orbitRadius, 0, Math.sin(startAngle) * data.orbitRadius);
-  scene.add(mesh);
+  tiltGroup.add(mesh);
 
   const planetTexPath = PLANET_TEXTURES[data.id];
   if (planetTexPath) {
@@ -149,13 +159,21 @@ const planets = planetBodies.map((data, i) => {
     });
   }
 
+  // Ring as sibling of planet mesh inside tiltGroup so it stays in the equatorial plane
+  // while the planet sphere spins independently
+  let ringMesh = null;
   if (data.hasRings) {
-    const ringMesh = new THREE.Mesh(
+    ringMesh = new THREE.Mesh(
       new THREE.RingGeometry(vr * 1.6, vr * 2.8, 64),
-      new THREE.MeshBasicMaterial({ color: 0xcab96a, side: THREE.DoubleSide, transparent: true, opacity: 0.7 })
+      new THREE.MeshBasicMaterial({
+        color: 0xd4b87a,
+        side: THREE.DoubleSide,
+        transparent: true,
+        depthWrite: false,
+      })
     );
-    ringMesh.rotation.x = Math.PI / 3;
-    mesh.add(ringMesh);
+    ringMesh.rotation.x = -Math.PI / 2;  // equatorial plane; parent tiltGroup provides the visual tilt
+    tiltGroup.add(ringMesh);
 
     textureLoader.load('/textures/2k_saturn_ring_alpha.png', (tex) => {
       ringMesh.material.alphaMap = tex;
@@ -163,10 +181,12 @@ const planets = planetBodies.map((data, i) => {
     });
   }
 
-  return { mesh, orbitMesh, data, angle: startAngle, speed: data.orbitSpeed * 0.007, vr };
+  return { mesh, ringMesh, group, orbitMesh, data, angle: startAngle, speed: data.orbitSpeed * 0.007, vr };
 });
 
 const meshList = planets.map(p => p.mesh);
+// clickTargets includes rings so clicking Saturn's ring also selects the planet
+const clickTargets = planets.flatMap(p => p.ringMesh ? [p.mesh, p.ringMesh] : [p.mesh]);
 
 // -- Moons
 const allMoons = [];
@@ -455,7 +475,7 @@ function selectPlanet(p) {
   hoveredPlanet = null;
   viewControls.classList.add('hidden');
 
-  const { x, z } = p.mesh.position;
+  const { x, z } = p.group.position;
   const or = p.data.orbitRadius;
   const camDist = p.vr * 8 + 10;
   const camPos = new THREE.Vector3(x + (x / or) * camDist, 3, z + (z / or) * camDist);
@@ -510,11 +530,10 @@ function trySelect(cx, cy) {
   raycaster.setFromCamera(pointer, camera);
 
   if (viewMode === 'top') {
-    const hits = raycaster.intersectObjects(meshList, true);
+    const hits = raycaster.intersectObjects(clickTargets);
     if (hits.length) {
-      let obj = hits[0].object;
-      while (obj.parent && !meshList.includes(obj)) obj = obj.parent;
-      const p = planets.find(q => q.mesh === obj);
+      const hitObj = hits[0].object;
+      const p = planets.find(q => q.mesh === hitObj || q.ringMesh === hitObj);
       if (p) { selectPlanet(p); return; }
     }
     if (raycaster.intersectObject(sunMesh).length) {
@@ -535,15 +554,14 @@ canvas.addEventListener('mousemove', e => {
   raycaster.setFromCamera(pointer, camera);
 
   if (viewMode === 'top') {
-    const hits = raycaster.intersectObjects(meshList, true);
+    const hits = raycaster.intersectObjects(clickTargets);
     const sunHit = raycaster.intersectObject(sunMesh).length > 0;
 
     canvas.style.cursor = (hits.length || sunHit) ? 'pointer' : 'default';
 
     if (hits.length) {
-      let obj = hits[0].object;
-      while (obj.parent && !meshList.includes(obj)) obj = obj.parent;
-      hoveredPlanet = planets.find(q => q.mesh === obj) || null;
+      const hitObj = hits[0].object;
+      hoveredPlanet = planets.find(q => q.mesh === hitObj || q.ringMesh === hitObj) || null;
     } else {
       hoveredPlanet = null;
     }
@@ -590,7 +608,7 @@ function updateLabels() {
   labels.forEach((el, i) => {
     el.style.opacity = visible ? '1' : '0';
     if (!visible) return;
-    const v = planets[i].mesh.position.clone().project(camera);
+    const v = planets[i].group.position.clone().project(camera);
     el.style.left = `${(v.x * 0.5 + 0.5) * window.innerWidth}px`;
     el.style.top  = `${(-v.y * 0.5 + 0.5) * window.innerHeight + 14}px`;
     el.style.transform = 'translateX(-50%)';
@@ -608,9 +626,9 @@ const clock = new THREE.Clock();
   const mult = viewMode === 'top' ? timeSpeed : 0.06;
   planets.forEach(p => {
     p.angle += p.speed * dt * 60 * mult;
-    p.mesh.position.x = Math.cos(p.angle) * p.data.orbitRadius;
-    p.mesh.position.z = Math.sin(p.angle) * p.data.orbitRadius;
-    p.mesh.rotation.y += dt * 0.2;
+    p.group.position.x = Math.cos(p.angle) * p.data.orbitRadius;
+    p.group.position.z = Math.sin(p.angle) * p.data.orbitRadius;
+    p.mesh.rotation.y += dt * 0.2;  // spins around tiltGroup's tilted local Y
   });
 
   // Moon orbits – always accumulate, visible only in front view of parent
@@ -619,7 +637,7 @@ const clock = new THREE.Clock();
     const show = isFront && activePlanet === m.parent;
     m.mesh.visible = show;
     m.angle += m.speed * dt * 60 * 0.5;
-    const pp = m.parent.mesh.position;
+    const pp = m.parent.group.position;
     m.mesh.position.set(
       pp.x + Math.cos(m.angle) * m.data.orbitRadius,
       pp.y,
@@ -639,7 +657,7 @@ const clock = new THREE.Clock();
   if (cam.animating) {
     tickCamera(dt);
   } else if (viewMode === 'front' && activePlanet) {
-    cam.lookAt.lerp(activePlanet.mesh.position, 0.04);
+    cam.lookAt.lerp(activePlanet.group.position, 0.04);
     camera.lookAt(cam.lookAt);
   } else {
     camera.lookAt(cam.lookAt);
@@ -654,7 +672,7 @@ const clock = new THREE.Clock();
 
   // Hover ring follows hovered planet with pulsing opacity
   if (viewMode === 'top' && hoveredPlanet && !cam.animating) {
-    hoverRing.position.copy(hoveredPlanet.mesh.position);
+    hoverRing.position.copy(hoveredPlanet.group.position);
     hoverRing.position.y = 0;
     hoverRing.scale.setScalar(hoveredPlanet.vr + 0.35);
     hoverRing.material.opacity = 0.45 + Math.sin(elapsed * 4) * 0.20;
