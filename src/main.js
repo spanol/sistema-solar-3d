@@ -231,7 +231,7 @@ function backToTop() {
   hint.style.opacity = '1';
 
   cam.tgtUp.set(0, 0, -1);
-  moveCameraTo(new THREE.Vector3(0, 110, 0), new THREE.Vector3(0, 0, 0), null);
+  moveCameraTo(new THREE.Vector3(0, 110, 0), new THREE.Vector3(0, 0, 0));
 }
 
 // ── Raycaster ─────────────────────────────────────────────────────
