@@ -4,6 +4,29 @@ import allBodies from './data/planets.json';
 const sunData = allBodies.find(b => b.isStar);
 const planetBodies = allBodies.filter(b => !b.isStar);
 
+// ── Texture loader ────────────────────────────────────────────────
+const textureLoader = new THREE.TextureLoader();
+
+const PLANET_TEX = {
+  sol:     '/textures/2k_sun.jpg',
+  mercury: '/textures/2k_mercury.jpg',
+  venus:   '/textures/2k_venus_surface.jpg',
+  earth:   '/textures/2k_earth_daymap.jpg',
+  mars:    '/textures/2k_mars.jpg',
+  jupiter: '/textures/2k_jupiter.jpg',
+  saturn:  '/textures/2k_saturn.jpg',
+  uranus:  '/textures/2k_uranus.jpg',
+  neptune: '/textures/2k_neptune.jpg',
+};
+
+function loadTex(path, material, clearColor) {
+  textureLoader.load(path, tex => {
+    material.map = tex;
+    if (clearColor) material.color.setHex(0xffffff);
+    material.needsUpdate = true;
+  }, undefined, () => {});
+}
+
 // ── Renderer ─────────────────────────────────────────────────────
 const canvas = document.getElementById('solar-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -50,11 +73,10 @@ scene.add(makeStars(600,  1800, 0.85, 0xd0e8ff));
 scene.add(makeStars(120,  1600, 1.4,  0xfff0cc));
 
 // ── Sun ───────────────────────────────────────────────────────────
-const sunMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(4, 32, 32),
-  new THREE.MeshBasicMaterial({ color: 0xffee44 })
-);
+const sunMat = new THREE.MeshBasicMaterial({ color: 0xffee44 });
+const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(4, 32, 32), sunMat);
 scene.add(sunMesh);
+loadTex(PLANET_TEX.sol, sunMat, true);
 
 // Glow layers (innermost → outermost)
 [
@@ -85,26 +107,70 @@ const planets = planetBodies.map((data, i) => {
   orbitMesh.rotation.x = Math.PI / 2;
   scene.add(orbitMesh);
 
-  const mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(vr, 32, 32),
-    new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.7, metalness: 0.0 })
-  );
+  const planetMat = new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.7, metalness: 0.0 });
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(vr, 32, 32), planetMat);
   mesh.position.set(Math.cos(startAngle) * data.orbitRadius, 0, Math.sin(startAngle) * data.orbitRadius);
   scene.add(mesh);
 
+  const texPath = PLANET_TEX[data.id];
+  if (texPath) loadTex(texPath, planetMat, true);
+
   if (data.hasRings) {
-    const ringMesh = new THREE.Mesh(
-      new THREE.RingGeometry(vr * 1.6, vr * 2.8, 64),
-      new THREE.MeshBasicMaterial({ color: 0xcab96a, side: THREE.DoubleSide, transparent: true, opacity: 0.7 })
-    );
+    const ringGeo = new THREE.RingGeometry(vr * 1.6, vr * 2.8, 64);
+    // Remap UVs so the radial axis (v) maps the ring strip texture correctly
+    const pos = ringGeo.attributes.position;
+    const uv  = ringGeo.attributes.uv;
+    const rMin = vr * 1.6, rMax = vr * 2.8;
+    const _v3 = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      _v3.fromBufferAttribute(pos, i);
+      uv.setXY(i, (_v3.length() - rMin) / (rMax - rMin), 0.5);
+    }
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xcab96a, side: THREE.DoubleSide, transparent: true, opacity: 0.7, depthWrite: false,
+    });
+    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
     ringMesh.rotation.x = Math.PI / 3;
     mesh.add(ringMesh);
+    textureLoader.load('/textures/2k_saturn_ring_alpha.png', tex => {
+      ringMat.map = tex;
+      ringMat.alphaMap = tex;
+      ringMat.color.setHex(0xffffff);
+      ringMat.opacity = 1.0;
+      ringMat.needsUpdate = true;
+    }, undefined, () => {});
   }
 
   return { mesh, orbitMesh, data, angle: startAngle, speed: data.orbitSpeed * 0.007, vr };
 });
 
 const meshList = planets.map(p => p.mesh);
+
+// ── Moons ─────────────────────────────────────────────────────────
+const allMoons = [];
+planets.forEach(p => {
+  p.moons = [];
+  if (!p.data.moons) return;
+  p.data.moons.forEach((md, mi) => {
+    const startAngle = (mi / p.data.moons.length) * Math.PI * 2;
+    const moonMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(Math.max(md.radius, 0.12), 14, 14),
+      new THREE.MeshStandardMaterial({ color: md.color, roughness: 0.88 })
+    );
+    moonMesh.visible = false;
+    scene.add(moonMesh);
+    const mo = {
+      mesh: moonMesh,
+      data: md,
+      angle: startAngle,
+      speed: md.orbitSpeed * 0.015,
+      parent: p,
+      labelEl: null,
+    };
+    p.moons.push(mo);
+    allMoons.push(mo);
+  });
+});
 
 // ── Planet Labels ─────────────────────────────────────────────────
 const labelWrap = document.createElement('div');
@@ -126,6 +192,25 @@ const labels = planets.map(p => {
   });
   labelWrap.appendChild(el);
   return el;
+});
+
+// Moon name labels (visible only in front view of the parent planet)
+allMoons.forEach(m => {
+  const el = document.createElement('div');
+  el.textContent = m.data.name;
+  Object.assign(el.style, {
+    position: 'absolute',
+    color: 'rgba(200,230,255,0.72)',
+    fontSize: '9px',
+    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    pointerEvents: 'none',
+    whiteSpace: 'nowrap',
+    textShadow: '0 1px 3px rgba(0,0,0,0.95)',
+    opacity: '0',
+    transition: 'opacity 0.5s',
+  });
+  labelWrap.appendChild(el);
+  m.labelEl = el;
 });
 
 // ── Hint ──────────────────────────────────────────────────────────
@@ -254,6 +339,23 @@ function showCard(data) {
   cardDay.textContent  = data.dayLength;
   cardYear.textContent = data.yearLength;
   cardFacts.innerHTML  = data.facts.map(f => `<li>${f}</li>`).join('');
+
+  // Moons section (created once, reused)
+  let moonsSect = document.getElementById('card-moons-section');
+  if (!moonsSect) {
+    moonsSect = document.createElement('div');
+    moonsSect.id = 'card-moons-section';
+    moonsSect.style.marginBottom = '0.8rem';
+    cardFacts.insertAdjacentElement('afterend', moonsSect);
+  }
+  if (data.moons && data.moons.length) {
+    moonsSect.innerHTML = '<p class="card-section-label">Luas</p>' +
+      `<div style="font-size:0.84rem;color:rgba(204,228,255,0.88);line-height:1.7">${data.moons.map(m => m.name).join(' · ')}</div>`;
+    moonsSect.style.display = '';
+  } else {
+    moonsSect.style.display = 'none';
+  }
+
   cardNav.classList.toggle('hidden', !activePlanet);
 
   // Calculadoras
@@ -437,6 +539,29 @@ const clock = new THREE.Clock();
     p.mesh.rotation.y += dt * 0.2;
   });
 
+  // Moon orbits – always accumulate, visible only in front view of parent
+  const isFront = viewMode === 'front';
+  allMoons.forEach(m => {
+    const show = isFront && activePlanet === m.parent;
+    m.mesh.visible = show;
+    m.angle += m.speed * dt * 60 * 0.5;
+    const pp = m.parent.mesh.position;
+    m.mesh.position.set(
+      pp.x + Math.cos(m.angle) * m.data.orbitRadius,
+      pp.y,
+      pp.z + Math.sin(m.angle) * m.data.orbitRadius
+    );
+    if (m.labelEl) {
+      m.labelEl.style.opacity = show ? '1' : '0';
+      if (show) {
+        const v = m.mesh.position.clone().project(camera);
+        m.labelEl.style.left = `${(v.x * 0.5 + 0.5) * window.innerWidth}px`;
+        m.labelEl.style.top  = `${(-v.y * 0.5 + 0.5) * window.innerHeight + 10}px`;
+        m.labelEl.style.transform = 'translateX(-50%)';
+      }
+    }
+  });
+
   if (cam.animating) {
     tickCamera(dt);
   } else if (viewMode === 'front' && activePlanet) {
@@ -446,7 +571,7 @@ const clock = new THREE.Clock();
     camera.lookAt(cam.lookAt);
   }
 
-  sunMesh.material.color.setHSL(0.12, 1, 0.5 + Math.sin(elapsed * 2) * 0.04);
+  sunMat.color.setHSL(0.12, sunMat.map ? 0.2 : 1, 0.5 + Math.sin(elapsed * 2) * 0.04);
   updateLabels();
   renderer.render(scene, camera);
 })();
