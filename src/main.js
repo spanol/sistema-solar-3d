@@ -163,12 +163,61 @@ const cardPrev     = document.getElementById('card-prev');
 const cardNext     = document.getElementById('card-next');
 document.getElementById('card-close').addEventListener('click', backToTop);
 
+// ── Calculator DOM ────────────────────────────────────────────────
+const calcSection      = document.getElementById('card-calculators');
+const calcWeightBlock  = document.getElementById('calc-weight-block');
+const calcAgeBlock     = document.getElementById('calc-age-block');
+const calcTravelBlock  = document.getElementById('calc-travel-block');
+const calcWeightInput  = document.getElementById('calc-weight-input');
+const calcWeightResult = document.getElementById('calc-weight-result');
+const calcBirthInput   = document.getElementById('calc-birth-input');
+const calcAgeResult    = document.getElementById('calc-age-result');
+const calcTravelResult = document.getElementById('calc-travel-result');
+
+// ── Calculadoras interativas ──────────────────────────────────────
+const PROBE_SPEED_KMH = 58000;
+let currentCardData = null;
+
+function formatTravelTime(distMkm) {
+  const hours = (distMkm * 1e6) / PROBE_SPEED_KMH;
+  const days  = hours / 24;
+  if (days < 1)   return `~${Math.round(hours)} horas`;
+  if (days < 730) return `~${Math.round(days)} dias`;
+  const years = days / 365.25;
+  return `~${years.toFixed(1)} anos`;
+}
+
+function calcWeight() {
+  const kg = parseFloat(calcWeightInput.value);
+  if (!currentCardData || !isFinite(kg) || kg <= 0) { calcWeightResult.textContent = '—'; return; }
+  const gf = currentCardData.gravityFactor;
+  if (!gf) { calcWeightResult.textContent = '—'; return; }
+  calcWeightResult.textContent = (kg * gf).toFixed(1) + ' kg';
+}
+
+function calcAge() {
+  const yld = currentCardData && currentCardData.yearLengthDays;
+  if (!yld) { calcAgeResult.textContent = '—'; return; }
+  const val = calcBirthInput.value;
+  if (!val) { calcAgeResult.textContent = '—'; return; }
+  const ageMs = Date.now() - new Date(val).getTime();
+  if (ageMs < 0) { calcAgeResult.textContent = '—'; return; }
+  const planetYears = (ageMs / 86400000) / yld;
+  calcAgeResult.textContent = planetYears >= 10
+    ? `${Math.round(planetYears)} anos`
+    : planetYears >= 1
+    ? `${planetYears.toFixed(1)} anos`
+    : `${planetYears.toFixed(2)} anos`;
+}
+
+calcWeightInput.addEventListener('input', calcWeight);
+calcBirthInput.addEventListener('change', calcAge);
+
 // ── View controls ─────────────────────────────────────────────────
 const viewControls = document.getElementById('view-controls');
 const btnOrbits    = document.getElementById('ctrl-orbits');
 const btnLabels    = document.getElementById('ctrl-labels');
-const speedSlider  = document.getElementById('ctrl-speed-slider');
-const speedVal     = document.getElementById('ctrl-speed-val');
+const btnRotation  = document.getElementById('ctrl-rotation');
 
 btnOrbits.addEventListener('click', () => {
   showOrbits = !showOrbits;
@@ -183,12 +232,16 @@ btnLabels.addEventListener('click', () => {
   btnLabels.setAttribute('aria-pressed', showLabels);
 });
 
-speedSlider.addEventListener('input', () => {
-  timeSpeed = parseFloat(speedSlider.value);
-  speedVal.textContent = timeSpeed === 0 ? '⏸' : timeSpeed.toFixed(1) + '×';
+btnRotation.addEventListener('click', () => {
+  timeSpeed = timeSpeed > 0 ? 0 : 1;
+  const running = timeSpeed > 0;
+  btnRotation.classList.toggle('active', running);
+  btnRotation.setAttribute('aria-pressed', running);
+  btnRotation.textContent = running ? '▶ Rotação' : '⏸ Rotação';
 });
 
 function showCard(data) {
+  currentCardData = data;
   cardName.textContent     = data.name;
   cardDesc.textContent     = data.description;
   cardDiameter.textContent = data.diameterKm.toLocaleString('pt-BR') + ' km';
@@ -202,6 +255,21 @@ function showCard(data) {
   cardYear.textContent = data.yearLength;
   cardFacts.innerHTML  = data.facts.map(f => `<li>${f}</li>`).join('');
   cardNav.classList.toggle('hidden', !activePlanet);
+
+  // Calculadoras
+  const hasGravity = typeof data.gravityFactor === 'number';
+  const hasYear    = typeof data.yearLengthDays === 'number';
+  const hasDist    = data.distanceFromSunMkm > 0;
+  calcSection.classList.toggle('hidden', !hasGravity && !hasYear && !hasDist);
+  calcWeightBlock.style.display = hasGravity ? '' : 'none';
+  calcAgeBlock.style.display    = hasYear    ? '' : 'none';
+  calcTravelBlock.style.display = hasDist    ? '' : 'none';
+  calcWeightResult.textContent  = '—';
+  calcAgeResult.textContent     = '—';
+  if (hasDist) calcTravelResult.textContent = formatTravelTime(data.distanceFromSunMkm);
+  calcWeight();
+  calcAge();
+
   hint.style.opacity = '0';
   card.classList.remove('hidden');
 }

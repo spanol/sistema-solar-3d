@@ -228,34 +228,6 @@ html, body {
   outline-offset: 2px;
 }
 
-.ctrl-speed {
-  background: rgba(5, 8, 18, 0.82);
-  border: 1px solid var(--card-border);
-  border-radius: 8px;
-  padding: 0.55rem 0.7rem;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.ctrl-speed-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.78rem;
-  color: var(--card-muted);
-  margin-bottom: 0.4rem;
-}
-
-#ctrl-speed-val {
-  color: var(--card-accent);
-  font-variant-numeric: tabular-nums;
-}
-
-#ctrl-speed-slider {
-  width: 100%;
-  accent-color: var(--card-accent);
-  cursor: pointer;
-  height: 4px;
-}
 
 /* ── Card nav (Anterior / Próximo) ─────────────────────────────── */
 #card-nav {
