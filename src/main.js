@@ -589,9 +589,9 @@ let composer = null;
 if (!isMobile) {
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.50,  // strength
-    0.50,  // radius
-    0.78   // threshold — sun luminance ~0.89 exceeds this
+    0.55,  // strength
+    0.45,  // radius
+    0.90   // threshold — sol HDR >1.0 (setRGB); planetas ficam abaixo com luma ~0.6-0.85
   );
   composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
@@ -669,10 +669,12 @@ const clock = new THREE.Clock();
   }
 
   if (sunTextureLoaded) {
-    // subtle warm pulse on texture
-    sunMesh.material.color.setHSL(0.10, 0.35, 0.90 + Math.sin(elapsed * 2) * 0.06);
+    // HDR pulse: mantém luma acima do bloom threshold (0.90) para o sol sempre brilhar
+    const p = 1.22 + Math.sin(elapsed * 2) * 0.08;
+    sunMesh.material.color.setRGB(p, p * 0.88, p * 0.56);
   } else {
-    sunMesh.material.color.setHSL(0.12, 1, 0.5 + Math.sin(elapsed * 2) * 0.04);
+    const p = 1.35 + Math.sin(elapsed * 2) * 0.08;
+    sunMesh.material.color.setRGB(p, p * 0.82, p * 0.20);
   }
 
   // Hover ring follows hovered planet with pulsing opacity
