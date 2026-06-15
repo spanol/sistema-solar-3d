@@ -1,5 +1,8 @@
 ﻿import * as THREE from 'three';
-import planetsData from './data/planets.json';
+import allBodies from './data/planets.json';
+
+const sunData = allBodies.find(b => b.isStar);
+const planetBodies = allBodies.filter(b => !b.isStar);
 
 // ── Renderer ─────────────────────────────────────────────────────
 const canvas = document.getElementById('solar-canvas');
@@ -13,7 +16,6 @@ const scene = new THREE.Scene();
 // ── Camera ────────────────────────────────────────────────────────
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
 
-// Separate pos/lookAt from their animation targets
 const cam = {
   pos:       new THREE.Vector3(0, 110, 0),
   lookAt:    new THREE.Vector3(0, 0, 0),
@@ -47,15 +49,16 @@ const sunMesh = new THREE.Mesh(
   new THREE.MeshBasicMaterial({ color: 0xffee55 })
 );
 scene.add(sunMesh);
+// Soft glow corona
 scene.add(new THREE.Mesh(
   new THREE.SphereGeometry(5.8, 32, 32),
   new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.1, side: THREE.BackSide })
 ));
 
 // ── Planets ───────────────────────────────────────────────────────
-const planets = planetsData.map((data, i) => {
-  const startAngle = (i / planetsData.length) * Math.PI * 2;
-  const vr = Math.max(data.radius * 1.5, 0.65);
+const planets = planetBodies.map((data, i) => {
+  const startAngle = (i / planetBodies.length) * Math.PI * 2;
+  const vr = Math.max(data.radius * 1.5, 0.65); // min size so small planets are visible
 
   const orbitMesh = new THREE.Mesh(
     new THREE.RingGeometry(data.orbitRadius - 0.1, data.orbitRadius + 0.1, 128),
@@ -130,10 +133,10 @@ const cardDesc  = document.getElementById('card-description');
 const cardFacts = document.getElementById('card-facts');
 document.getElementById('card-close').addEventListener('click', backToTop);
 
-function showCard(p) {
-  cardName.textContent = p.data.name;
-  cardDesc.textContent = p.data.description;
-  cardFacts.innerHTML = p.data.facts.map(f => `<li>${f}</li>`).join('');
+function showCard(data) {
+  cardName.textContent = data.name;
+  cardDesc.textContent = data.description;
+  cardFacts.innerHTML = data.facts.map(f => `<li>${f}</li>`).join('');
   card.classList.remove('hidden');
 }
 function hideCard() { card.classList.add('hidden'); }
@@ -177,7 +180,7 @@ function selectPlanet(p) {
   const camDist = p.vr * 8 + 10;
   const camPos = new THREE.Vector3(x + (x / or) * camDist, 3, z + (z / or) * camDist);
 
-  moveCameraTo(camPos, new THREE.Vector3(x, 0, z), () => showCard(p));
+  moveCameraTo(camPos, new THREE.Vector3(x, 0, z), () => showCard(p.data));
 }
 
 function backToTop() {
@@ -201,24 +204,35 @@ function setPointer(cx, cy) {
 }
 
 function trySelect(cx, cy) {
-  if (viewMode !== 'top' || cam.animating) return;
+  if (cam.animating) return;
   setPointer(cx, cy);
   raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(meshList, true);
-  if (!hits.length) return;
-  let obj = hits[0].object;
-  while (obj.parent && !meshList.includes(obj)) obj = obj.parent;
-  const p = planets.find(q => q.mesh === obj);
-  if (p) selectPlanet(p);
+
+  if (viewMode === 'top') {
+    // Check planets first
+    const hits = raycaster.intersectObjects(meshList, true);
+    if (hits.length) {
+      let obj = hits[0].object;
+      while (obj.parent && !meshList.includes(obj)) obj = obj.parent;
+      const p = planets.find(q => q.mesh === obj);
+      if (p) { selectPlanet(p); return; }
+    }
+    // Check sun
+    if (raycaster.intersectObject(sunMesh).length) {
+      showCard(sunData);
+    }
+  }
 }
 
 canvas.addEventListener('click', e => trySelect(e.clientX, e.clientY));
 
 canvas.addEventListener('mousemove', e => {
-  if (viewMode !== 'top' || cam.animating) { canvas.style.cursor = 'default'; return; }
+  if (cam.animating) { canvas.style.cursor = 'default'; return; }
   setPointer(e.clientX, e.clientY);
   raycaster.setFromCamera(pointer, camera);
-  canvas.style.cursor = raycaster.intersectObjects(meshList, true).length ? 'pointer' : 'default';
+  const hit = viewMode === 'top' &&
+    (raycaster.intersectObjects(meshList, true).length || raycaster.intersectObject(sunMesh).length);
+  canvas.style.cursor = hit ? 'pointer' : 'default';
 });
 
 canvas.addEventListener('touchend', e => {
