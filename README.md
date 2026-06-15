@@ -31,3 +31,12 @@ Abra `http://localhost:5173` no navegador.
 npm run build
 npm run preview
 ```
+
+## Créditos de texturas
+
+As texturas 2K dos planetas e do Sol em `public/textures/` provêm do pack **Solar System Scope Textures**:
+
+> © Solar System Scope — [solarsystemscope.com/textures](https://www.solarsystemscope.com/textures/)  
+> Licença: [CC Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+
+Texturas incluídas: Sol, Mercúrio, Vênus (superfície), Terra (mapa diurno), Marte, Júpiter, Saturno, anel de Saturno (alpha), Urano, Netuno.
