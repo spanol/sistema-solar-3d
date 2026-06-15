@@ -13,6 +13,9 @@ const canvas = document.getElementById('solar-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.9;
 
 // -- Scene
 const scene = new THREE.Scene();
@@ -36,9 +39,9 @@ camera.up.copy(cam.up);
 camera.lookAt(cam.lookAt);
 
 // -- Lights
-scene.add(new THREE.AmbientLight(0x0a0a1e, 1.2));
-scene.add(new THREE.HemisphereLight(0x223366, 0x000814, 0.6));
-const sunLight = new THREE.PointLight(0xfff5e0, 4.5, 700);
+scene.add(new THREE.AmbientLight(0x111133, 2.0));
+scene.add(new THREE.HemisphereLight(0x223366, 0x000814, 0.8));
+const sunLight = new THREE.PointLight(0xfff5e0, 2.5, 0, 0);
 scene.add(sunLight);
 
 // -- Stars
@@ -77,6 +80,7 @@ const sunMesh = new THREE.Mesh(
 scene.add(sunMesh);
 
 textureLoader.load(PLANET_TEXTURES.sol, (tex) => {
+  tex.colorSpace = THREE.SRGBColorSpace;
   sunMesh.material.map = tex;
   sunMesh.material.color.set(0xffffff);
   sunMesh.material.needsUpdate = true;
@@ -153,6 +157,7 @@ const planets = planetBodies.map((data, i) => {
   const planetTexPath = PLANET_TEXTURES[data.id];
   if (planetTexPath) {
     textureLoader.load(planetTexPath, (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
       mesh.material.map = tex;
       mesh.material.color.set(0xffffff);
       mesh.material.needsUpdate = true;
