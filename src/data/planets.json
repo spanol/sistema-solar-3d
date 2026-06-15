@@ -1,0 +1,175 @@
+[
+  {
+    "id": "sol",
+    "name": "Sol",
+    "description": "A estrela central do nosso sistema — fonte de luz e energia para todos os planetas.",
+    "isStar": true,
+    "diameterKm": 1392700,
+    "distanceFromSunMkm": 0,
+    "dayLength": "25–35 dias terrestres (rotação diferencial)",
+    "yearLength": "~225 milhões de anos (volta à galáxia)",
+    "color": "#ffcc00",
+    "radius": 3.5,
+    "relativeSize": 3.5,
+    "orbitRadius": 0,
+    "orbitSpeed": 0,
+    "facts": [
+      "O Sol contém 99,86% de toda a massa do Sistema Solar.",
+      "Sua temperatura superficial é ~5.500 °C, mas a coroa chega a 1 milhão °C.",
+      "A luz do Sol demora cerca de 8 minutos e 20 segundos para chegar à Terra."
+    ]
+  },
+  {
+    "id": "mercury",
+    "name": "Mercúrio",
+    "description": "O menor planeta do Sistema Solar e o mais próximo do Sol.",
+    "diameterKm": 4879,
+    "distanceFromSunMkm": 57.9,
+    "dayLength": "59 dias terrestres",
+    "yearLength": "88 dias terrestres",
+    "color": "#b5b5b5",
+    "radius": 0.38,
+    "relativeSize": 0.38,
+    "orbitRadius": 8,
+    "orbitSpeed": 4.15,
+    "facts": [
+      "Um dia em Mercúrio dura 59 dias terrestres — mais que seu próprio ano.",
+      "Temperatura varia de −180 °C à noite a +430 °C de dia.",
+      "É o segundo planeta mais denso do Sistema Solar, após a Terra."
+    ]
+  },
+  {
+    "id": "venus",
+    "name": "Vênus",
+    "description": "O planeta mais quente do Sistema Solar, com atmosfera densa de CO₂.",
+    "diameterKm": 12104,
+    "distanceFromSunMkm": 108.2,
+    "dayLength": "243 dias terrestres (rotação retrógrada)",
+    "yearLength": "225 dias terrestres",
+    "color": "#e8cda0",
+    "radius": 0.95,
+    "relativeSize": 0.95,
+    "orbitRadius": 12,
+    "orbitSpeed": 1.62,
+    "facts": [
+      "Temperatura superficial média de 465 °C — mais quente que Mercúrio.",
+      "Gira ao contrário em relação à maioria dos planetas; o Sol nasce no oeste.",
+      "Um dia venusiano é mais longo que seu ano."
+    ]
+  },
+  {
+    "id": "earth",
+    "name": "Terra",
+    "description": "Nosso lar — o único planeta conhecido a abrigar vida.",
+    "diameterKm": 12742,
+    "distanceFromSunMkm": 149.6,
+    "dayLength": "24 horas",
+    "yearLength": "365,25 dias",
+    "color": "#3a82c4",
+    "radius": 1,
+    "relativeSize": 1,
+    "orbitRadius": 16,
+    "orbitSpeed": 1,
+    "facts": [
+      "71% da superfície terrestre é coberta por oceanos.",
+      "Único planeta com tectônica de placas ativa conhecida.",
+      "A Lua estabiliza a inclinação axial da Terra, tornando o clima mais estável."
+    ]
+  },
+  {
+    "id": "mars",
+    "name": "Marte",
+    "description": "O Planeta Vermelho, com o maior vulcão e cânion do Sistema Solar.",
+    "diameterKm": 6779,
+    "distanceFromSunMkm": 227.9,
+    "dayLength": "24h 37min",
+    "yearLength": "687 dias terrestres",
+    "color": "#c1440e",
+    "radius": 0.53,
+    "relativeSize": 0.53,
+    "orbitRadius": 21,
+    "orbitSpeed": 0.53,
+    "facts": [
+      "Olympus Mons tem 21 km de altitude — o maior vulcão do Sistema Solar.",
+      "Valles Marineris tem 4.000 km de comprimento e até 7 km de profundidade.",
+      "Marte tem duas luas, Fobos e Deimos, provavelmente asteroides capturados."
+    ]
+  },
+  {
+    "id": "jupiter",
+    "name": "Júpiter",
+    "description": "O maior planeta do Sistema Solar — uma gigante gasosa.",
+    "diameterKm": 139820,
+    "distanceFromSunMkm": 778.5,
+    "dayLength": "9h 56min",
+    "yearLength": "11,86 anos terrestres",
+    "color": "#c88b3a",
+    "radius": 2.5,
+    "relativeSize": 2.5,
+    "orbitRadius": 30,
+    "orbitSpeed": 0.084,
+    "facts": [
+      "A Grande Mancha Vermelha é uma tempestade ativa há mais de 350 anos.",
+      "Possui pelo menos 95 luas conhecidas; Ganimedes é maior que Mercúrio.",
+      "Júpiter atua como escudo do Sistema Solar, atraindo asteroides com sua gravidade."
+    ]
+  },
+  {
+    "id": "saturn",
+    "name": "Saturno",
+    "description": "Famoso pelos seus espetaculares anéis de gelo e rocha.",
+    "diameterKm": 116460,
+    "distanceFromSunMkm": 1432,
+    "dayLength": "10h 33min",
+    "yearLength": "29,46 anos terrestres",
+    "color": "#e4d191",
+    "radius": 2.1,
+    "relativeSize": 2.1,
+    "orbitRadius": 40,
+    "orbitSpeed": 0.034,
+    "hasRings": true,
+    "facts": [
+      "Saturno flutuaria na água — é o planeta menos denso do Sistema Solar.",
+      "Seus anéis se estendem até 282.000 km, mas têm apenas ~10 m de espessura.",
+      "Titã, sua maior lua, tem lagos de metano líquido na superfície."
+    ]
+  },
+  {
+    "id": "uranus",
+    "name": "Urano",
+    "description": "Gigante de gelo com inclinação axial de 98° — rola na órbita.",
+    "diameterKm": 50724,
+    "distanceFromSunMkm": 2867,
+    "dayLength": "17h 14min (retrógrado)",
+    "yearLength": "84 anos terrestres",
+    "color": "#7de8e8",
+    "radius": 1.6,
+    "relativeSize": 1.6,
+    "orbitRadius": 50,
+    "orbitSpeed": 0.012,
+    "facts": [
+      "Inclinação axial de 97,8° — praticamente de lado, como se estivesse rolando.",
+      "Temperatura mínima de −224 °C, o mais frio do Sistema Solar.",
+      "Foi o primeiro planeta descoberto com telescópio, por William Herschel em 1781."
+    ]
+  },
+  {
+    "id": "neptune",
+    "name": "Netuno",
+    "description": "O planeta mais distante do Sol, com ventos supersônicos.",
+    "diameterKm": 49244,
+    "distanceFromSunMkm": 4515,
+    "dayLength": "16h 6min",
+    "yearLength": "164,8 anos terrestres",
+    "color": "#4b70dd",
+    "radius": 1.55,
+    "relativeSize": 1.55,
+    "orbitRadius": 60,
+    "orbitSpeed": 0.006,
+    "facts": [
+      "Netuno tem os ventos mais rápidos do Sistema Solar — chegando a 2.100 km/h.",
+      "Desde sua descoberta em 1846, completou apenas uma volta ao Sol (em 2011).",
+      "Tritão, sua maior lua, orbita ao contrário e está gradualmente se aproximando de Netuno."
+    ]
+  }
+]
