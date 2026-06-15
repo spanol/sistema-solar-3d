@@ -168,6 +168,32 @@ const planets = planetBodies.map((data, i) => {
 
 const meshList = planets.map(p => p.mesh);
 
+// -- Moons
+const allMoons = [];
+planets.forEach(p => {
+  p.moons = [];
+  if (!p.data.moons) return;
+  p.data.moons.forEach((md, mi) => {
+    const startAngle = (mi / p.data.moons.length) * Math.PI * 2;
+    const moonMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(Math.max(md.radius, 0.12), 14, 14),
+      new THREE.MeshStandardMaterial({ color: md.color, roughness: 0.88 })
+    );
+    moonMesh.visible = false;
+    scene.add(moonMesh);
+    const mo = {
+      mesh: moonMesh,
+      data: md,
+      angle: startAngle,
+      speed: md.orbitSpeed * 0.015,
+      parent: p,
+      labelEl: null,
+    };
+    p.moons.push(mo);
+    allMoons.push(mo);
+  });
+});
+
 // -- Hover ring (flat in XZ plane; scaled per hovered planet each frame)
 const hoverRing = new THREE.Mesh(
   new THREE.RingGeometry(1.1, 1.45, 48),
@@ -204,6 +230,25 @@ const labels = planets.map(p => {
   });
   labelWrap.appendChild(el);
   return el;
+});
+
+// Moon name labels (visible only in front view of the parent planet)
+allMoons.forEach(m => {
+  const el = document.createElement('div');
+  el.textContent = m.data.name;
+  Object.assign(el.style, {
+    position: 'absolute',
+    color: 'rgba(200,230,255,0.72)',
+    fontSize: '9px',
+    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    pointerEvents: 'none',
+    whiteSpace: 'nowrap',
+    textShadow: '0 1px 3px rgba(0,0,0,0.95)',
+    opacity: '0',
+    transition: 'opacity 0.5s',
+  });
+  labelWrap.appendChild(el);
+  m.labelEl = el;
 });
 
 // -- Hint
@@ -299,6 +344,22 @@ function showCard(data) {
   cardDay.textContent  = data.dayLength;
   cardYear.textContent = data.yearLength;
   cardFacts.innerHTML  = data.facts.map(f => `<li>${f}</li>`).join('');
+
+  // Moons section
+  let moonsSect = document.getElementById('card-moons-section');
+  if (!moonsSect) {
+    moonsSect = document.createElement('div');
+    moonsSect.id = 'card-moons-section';
+    moonsSect.style.marginBottom = '0.8rem';
+    cardFacts.insertAdjacentElement('afterend', moonsSect);
+  }
+  if (data.moons && data.moons.length) {
+    moonsSect.innerHTML = '<p class="card-section-label">Luas</p>' +
+      `<div style="font-size:0.84rem;color:rgba(204,228,255,0.88);line-height:1.7">${data.moons.map(m => m.name).join(' · ')}</div>`;
+    moonsSect.style.display = '';
+  } else {
+    moonsSect.style.display = 'none';
+  }
 
   // Calculadoras
   const hasGravity = typeof data.gravityFactor === 'number';
@@ -495,6 +556,29 @@ const clock = new THREE.Clock();
     p.mesh.position.x = Math.cos(p.angle) * p.data.orbitRadius;
     p.mesh.position.z = Math.sin(p.angle) * p.data.orbitRadius;
     p.mesh.rotation.y += dt * 0.2;
+  });
+
+  // Moon orbits – always accumulate, visible only in front view of parent
+  const isFront = viewMode === 'front';
+  allMoons.forEach(m => {
+    const show = isFront && activePlanet === m.parent;
+    m.mesh.visible = show;
+    m.angle += m.speed * dt * 60 * 0.5;
+    const pp = m.parent.mesh.position;
+    m.mesh.position.set(
+      pp.x + Math.cos(m.angle) * m.data.orbitRadius,
+      pp.y,
+      pp.z + Math.sin(m.angle) * m.data.orbitRadius
+    );
+    if (m.labelEl) {
+      m.labelEl.style.opacity = show ? '1' : '0';
+      if (show) {
+        const v = m.mesh.position.clone().project(camera);
+        m.labelEl.style.left = `${(v.x * 0.5 + 0.5) * window.innerWidth}px`;
+        m.labelEl.style.top  = `${(-v.y * 0.5 + 0.5) * window.innerHeight + 10}px`;
+        m.labelEl.style.transform = 'translateX(-50%)';
+      }
+    }
   });
 
   if (cam.animating) {
