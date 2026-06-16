@@ -19,15 +19,16 @@ renderer.toneMappingExposure = 0.9;
 
 // -- Scene
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x020408);
 
 // -- Camera
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
 
 const cam = {
-  pos:       new THREE.Vector3(0, 110, 0),
+  pos:       new THREE.Vector3(0, 130, 32),
   lookAt:    new THREE.Vector3(0, 0, 0),
   up:        new THREE.Vector3(0, 0, -1),
-  tgtPos:    new THREE.Vector3(0, 110, 0),
+  tgtPos:    new THREE.Vector3(0, 130, 32),
   tgtLookAt: new THREE.Vector3(0, 0, 0),
   tgtUp:     new THREE.Vector3(0, 0, -1),
   animating: false,
@@ -47,17 +48,91 @@ scene.add(sunLight);
 const fillLight = new THREE.PointLight(0xfff8f0, 0, 0, 0);
 scene.add(fillLight);
 
-// -- Stars
-function makeStars(count, spread, size, color) {
-  const v = new Float32Array(count * 3);
-  for (let i = 0; i < v.length; i++) v[i] = (Math.random() - 0.5) * spread;
+// -- Space background: dark navy with galactic band + nebula patches
+(function makeSpaceBackground() {
+  const W = 2048, H = 1024;
+  const bgCanvas = document.createElement('canvas');
+  bgCanvas.width = W; bgCanvas.height = H;
+  const ctx = bgCanvas.getContext('2d');
+
+  ctx.fillStyle = '#010209';
+  ctx.fillRect(0, 0, W, H);
+
+  // Galactic band — two overlapping horizontal gradients
+  [
+    { spread: 0.28, alpha: 0.20, rgb: [18, 10, 42] },
+    { spread: 0.12, alpha: 0.14, rgb: [30, 18, 60] },
+  ].forEach(({ spread, alpha, rgb }) => {
+    const g = ctx.createLinearGradient(0, H * (0.5 - spread), 0, H * (0.5 + spread));
+    g.addColorStop(0,   'rgba(0,0,0,0)');
+    g.addColorStop(0.5, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`);
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  });
+
+  // Subtle nebula patches
+  [
+    [0.18, 0.42, 140, 'rgba(25,8,55,0.11)'],
+    [0.68, 0.58, 110, 'rgba(8,22,50,0.09)'],
+    [0.44, 0.35, 160, 'rgba(12,6,38,0.08)'],
+  ].forEach(([fx, fy, r, c]) => {
+    const grd = ctx.createRadialGradient(fx*W, fy*H, 0, fx*W, fy*H, r);
+    grd.addColorStop(0, c);
+    grd.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+  });
+
+  const tex = new THREE.CanvasTexture(bgCanvas);
+  tex.mapping = THREE.EquirectangularReflectionMapping;
+  scene.background = tex;
+})();
+
+// -- Stars on a spherical shell (900–1200 units) — safely outside the solar system
+const starSpriteTex = (() => {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0,    'rgba(255,255,255,1.0)');
+  g.addColorStop(0.20, 'rgba(255,255,255,0.9)');
+  g.addColorStop(0.55, 'rgba(255,255,255,0.35)');
+  g.addColorStop(1,    'rgba(255,255,255,0.0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+})();
+
+function makeStars(count, minR, maxR, size, color) {
+  const pos = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = minR + Math.random() * (maxR - minR);
+    pos[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+    pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    pos[i * 3 + 2] = r * Math.cos(phi);
+  }
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(v, 3));
-  return new THREE.Points(geo, new THREE.PointsMaterial({ color, size, sizeAttenuation: true }));
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  return new THREE.Points(geo, new THREE.PointsMaterial({
+    color, size, sizeAttenuation: true,
+    map: starSpriteTex,
+    transparent: true, depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }));
 }
-scene.add(makeStars(5000, 1800, 0.32, 0xffffff));
-scene.add(makeStars(600,  1800, 0.85, 0xd0e8ff));
-scene.add(makeStars(120,  1600, 1.4,  0xfff0cc));
+
+// Star layers on shell 900–1200 — white, blue-white, warm yellow
+const starGroups = [
+  makeStars(4000, 900, 1200, 0.48, 0xffffff),
+  makeStars(1200, 900, 1200, 0.30, 0xffffff),
+  makeStars(600,  900, 1200, 0.78, 0xc8dcff),
+  makeStars(280,  900, 1200, 0.62, 0xfff5cc),
+  makeStars(100,  900, 1200, 1.10, 0xffcc88),
+];
+starGroups.forEach(g => scene.add(g));
 
 // -- Texture loader
 const textureLoader = new THREE.TextureLoader();
@@ -475,6 +550,10 @@ function tickCamera(dt) {
   }
 }
 
+// Horizontal offset in world space so the planet sits in the right third of the screen
+// (card panel occupies the left ~30% — we shift the lookAt leftward in camera space)
+const frontViewLookAtOffset = new THREE.Vector3();
+
 // -- Selection / back
 function selectPlanet(p) {
   activePlanet = p;
@@ -486,10 +565,27 @@ function selectPlanet(p) {
   const { x, z } = p.group.position;
   const or = p.data.orbitRadius;
   const camDist = p.vr * 8 + 10;
-  const camPos = new THREE.Vector3(x - (x / or) * camDist, 3, z - (z / or) * camDist);
+
+  // 3/4 elevation angle: camera sits ~27–33° above the planet's equator
+  const elevation = p.vr * 3.5 + 8;
+
+  // Camera is on the sun-side: nx,nz = unit vector from sun toward planet
+  const nx = x / or, nz = z / or;
+
+  const camPos = new THREE.Vector3(
+    x - nx * camDist,
+    elevation,
+    z - nz * camDist,
+  );
+
+  // Camera left in XZ = (nz, 0, -nx) (90° CCW from forward when viewed from +Y)
+  // Shift lookAt left so the planet projects onto the right third of the screen
+  const isMobileLayout = window.innerWidth < 768;
+  const shift = isMobileLayout ? 0 : camDist * 0.22;
+  frontViewLookAtOffset.set(nz * shift, 0, -nx * shift);
 
   cam.tgtUp.set(0, 1, 0);
-  moveCameraTo(camPos, new THREE.Vector3(x, 0, z), () => showCard(p.data));
+  moveCameraTo(camPos, new THREE.Vector3(x, 0, z).add(frontViewLookAtOffset), () => showCard(p.data));
 }
 
 function backToTop() {
@@ -500,7 +596,7 @@ function backToTop() {
   viewControls.classList.remove('hidden');
 
   cam.tgtUp.set(0, 0, -1);
-  moveCameraTo(new THREE.Vector3(0, 110, 0), new THREE.Vector3(0, 0, 0));
+  moveCameraTo(new THREE.Vector3(0, 130, 32), new THREE.Vector3(0, 0, 0));
 }
 
 // -- Sequential navigation
@@ -665,11 +761,17 @@ const clock = new THREE.Clock();
   if (cam.animating) {
     tickCamera(dt);
   } else if (viewMode === 'front' && activePlanet) {
-    cam.lookAt.lerp(activePlanet.group.position, 0.04);
+    const targetLookAt = activePlanet.group.position.clone().add(frontViewLookAtOffset);
+    cam.lookAt.lerp(targetLookAt, 0.04);
     camera.lookAt(cam.lookAt);
   } else {
     camera.lookAt(cam.lookAt);
   }
+
+  // Subtle star twinkle — different phase per group keeps it natural
+  starGroups.forEach((g, i) => {
+    g.material.opacity = 0.78 + Math.sin(elapsed * (0.45 + i * 0.22) + i * 2.09) * 0.13;
+  });
 
   if (sunTextureLoaded) {
     // HDR pulse: mantém luma acima do bloom threshold (0.90) para o sol sempre brilhar
