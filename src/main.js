@@ -677,9 +677,68 @@ canvas.addEventListener('mousemove', e => {
 
 canvas.addEventListener('touchend', e => {
   e.preventDefault();
-  const t = e.changedTouches[0];
-  trySelect(t.clientX, t.clientY);
+  if (e.changedTouches.length === 1 && !pinch.active) {
+    const t = e.changedTouches[0];
+    trySelect(t.clientX, t.clientY);
+  }
+  if (e.touches.length < 2) pinch.active = false;
 }, { passive: false });
+
+// -- Interactive zoom (replaces the browser's native zoom)
+// Dollies the camera along its view direction, clamped to a sane range.
+const ZOOM = { min: 14, max: 540, step: 0.0016 };
+
+function applyZoom(deltaY) {
+  if (cam.animating) return;
+  const offset = cam.pos.clone().sub(cam.lookAt);
+  let dist = offset.length();
+  if (dist < 1e-3) return;
+  dist *= Math.exp(deltaY * ZOOM.step);
+  dist = Math.min(ZOOM.max, Math.max(ZOOM.min, dist));
+  offset.setLength(dist);
+  cam.pos.copy(cam.lookAt).add(offset);
+  cam.tgtPos.copy(cam.pos);
+  camera.position.copy(cam.pos);
+  camera.lookAt(cam.lookAt);
+}
+
+// Wheel over the canvas zooms the scene instead of scrolling/zooming the page.
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  applyZoom(e.deltaY);
+}, { passive: false });
+
+// Pinch-to-zoom on touch devices.
+const pinch = { active: false, dist: 0 };
+function touchDist(t) {
+  const dx = t[0].clientX - t[1].clientX;
+  const dy = t[0].clientY - t[1].clientY;
+  return Math.hypot(dx, dy);
+}
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    pinch.active = true;
+    pinch.dist = touchDist(e.touches);
+  }
+}, { passive: false });
+canvas.addEventListener('touchmove', e => {
+  if (e.touches.length === 2) {
+    e.preventDefault();
+    const d = touchDist(e.touches);
+    if (pinch.dist > 0) applyZoom((pinch.dist - d) * 1.4);
+    pinch.dist = d;
+  }
+}, { passive: false });
+
+// Suppress the browser's native page zoom (Ctrl/⌘ + wheel, +/-/0).
+window.addEventListener('wheel', e => {
+  if (e.ctrlKey) e.preventDefault();
+}, { passive: false });
+window.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && ['+', '-', '=', '0'].includes(e.key)) {
+    e.preventDefault();
+  }
+});
 
 // -- Post-processing bloom (skipped on mobile to preserve FPS)
 const isMobile = navigator.maxTouchPoints > 0 && window.innerWidth < 768;
