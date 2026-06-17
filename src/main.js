@@ -375,6 +375,65 @@ let showOrbits = true;
 let showLabels = true;
 let timeSpeed = 1;
 
+// -- URL hash deep-link
+function parseHash() {
+  const h = location.hash.slice(1);
+  if (!h) return {};
+  return Object.fromEntries(
+    h.split('&').filter(Boolean).map(p => {
+      const eq = p.indexOf('=');
+      return eq === -1 ? [p, ''] : [p.slice(0, eq), decodeURIComponent(p.slice(eq + 1))];
+    })
+  );
+}
+
+function serializeHash() {
+  const parts = [];
+  if (activePlanet) parts.push(`planet=${activePlanet.data.id}`);
+  parts.push(`orbits=${showOrbits ? 1 : 0}`);
+  parts.push(`labels=${showLabels ? 1 : 0}`);
+  parts.push(`speed=${timeSpeed}`);
+  return '#' + parts.join('&');
+}
+
+function updateHash() {
+  history.replaceState(null, '', serializeHash());
+}
+
+function restoreFromHash() {
+  const params = parseHash();
+  if (!Object.keys(params).length) return;
+
+  if ('orbits' in params) {
+    showOrbits = params.orbits !== '0';
+    btnOrbits.classList.toggle('active', showOrbits);
+    btnOrbits.setAttribute('aria-pressed', String(showOrbits));
+    planets.forEach(p => { p.orbitMesh.visible = showOrbits; });
+  }
+
+  if ('labels' in params) {
+    showLabels = params.labels !== '0';
+    btnLabels.classList.toggle('active', showLabels);
+    btnLabels.setAttribute('aria-pressed', String(showLabels));
+  }
+
+  if ('speed' in params) {
+    const s = parseFloat(params.speed);
+    if (isFinite(s)) {
+      timeSpeed = s;
+      const running = timeSpeed > 0;
+      btnRotation.classList.toggle('active', running);
+      btnRotation.setAttribute('aria-pressed', String(running));
+      btnRotation.textContent = running ? '▶ Rotação' : '⏸ Rotação';
+    }
+  }
+
+  if (params.planet) {
+    const p = planets.find(pl => pl.data.id === params.planet);
+    if (p) selectPlanet(p);
+  }
+}
+
 // -- Card DOM
 const card         = document.getElementById('planet-card');
 const cardName     = document.getElementById('card-name');
@@ -450,12 +509,14 @@ btnOrbits.addEventListener('click', () => {
   btnOrbits.classList.toggle('active', showOrbits);
   btnOrbits.setAttribute('aria-pressed', showOrbits);
   planets.forEach(p => { p.orbitMesh.visible = showOrbits; });
+  updateHash();
 });
 
 btnLabels.addEventListener('click', () => {
   showLabels = !showLabels;
   btnLabels.classList.toggle('active', showLabels);
   btnLabels.setAttribute('aria-pressed', showLabels);
+  updateHash();
 });
 
 btnRotation.addEventListener('click', () => {
@@ -464,6 +525,7 @@ btnRotation.addEventListener('click', () => {
   btnRotation.classList.toggle('active', running);
   btnRotation.setAttribute('aria-pressed', running);
   btnRotation.textContent = running ? '▶ Rotação' : '⏸ Rotação';
+  updateHash();
 });
 
 function showCard(data) {
@@ -558,6 +620,7 @@ const frontViewLookAtOffset = new THREE.Vector3();
 function selectPlanet(p) {
   activePlanet = p;
   viewMode = 'front';
+  updateHash();
   hideCard();
   hoveredPlanet = null;
   viewControls.classList.add('hidden');
@@ -592,6 +655,7 @@ function backToTop() {
   hideCard();
   activePlanet = null;
   viewMode = 'top';
+  updateHash();
   hint.style.opacity = '1';
   viewControls.classList.remove('hidden');
 
@@ -777,6 +841,9 @@ function updateLabels() {
     el.style.transform = 'translateX(-50%)';
   });
 }
+
+// -- Restore state from URL hash on first load
+restoreFromHash();
 
 // -- Animation loop
 const clock = new THREE.Clock();
