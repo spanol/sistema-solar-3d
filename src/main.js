@@ -211,6 +211,127 @@ asteroidBeltReal.material.opacity = 0;
 scene.add(asteroidBeltCompressed);
 scene.add(asteroidBeltReal);
 
+// -- Comets (Halley + Encke) — eccentric orbits, anti-sun tail
+const COMET_DEFS = [
+  { name: 'Halley', a: 59,  e: 0.967, periodS: 7400, inclRad: Math.PI * 162 / 180, M0: 0.0 },
+  { name: 'Encke',  a:  7.4, e: 0.847, periodS: 330,  inclRad: Math.PI * 11.8 / 180, M0: Math.PI },
+];
+
+function solveKepler(M, e) {
+  let E = M % (Math.PI * 2);
+  for (let i = 0; i < 8; i++) E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+  return E;
+}
+
+const cometSpriteTex = (() => {
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+  g.addColorStop(0,   'rgba(210,235,255,1)');
+  g.addColorStop(0.45,'rgba(130,190,255,0.35)');
+  g.addColorStop(1,   'rgba(40,100,220,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 32, 32);
+  return new THREE.CanvasTexture(c);
+})();
+
+const TAIL_N = 64;
+
+const comets = COMET_DEFS.map((def) => {
+  const { a, e, inclRad, M0 } = def;
+  const b = a * Math.sqrt(1 - e * e);
+  const cfoc = a * e;
+
+  const orbitGroup = new THREE.Group();
+  orbitGroup.rotation.x = inclRad;
+  scene.add(orbitGroup);
+
+  const orbitPts = [];
+  for (let i = 0; i <= 256; i++) {
+    const theta = (i / 256) * Math.PI * 2;
+    orbitPts.push(new THREE.Vector3(a * Math.cos(theta) - cfoc, 0, b * Math.sin(theta)));
+  }
+  const orbitLine = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(orbitPts),
+    new THREE.LineBasicMaterial({ color: 0x1a2e4a, transparent: true, opacity: 0.35 })
+  );
+  orbitGroup.add(orbitLine);
+
+  const nucleus = new THREE.Mesh(
+    new THREE.SphereGeometry(0.28, 8, 8),
+    new THREE.MeshStandardMaterial({ color: 0xbbddff, emissive: 0x88bbff, emissiveIntensity: 2.5, roughness: 0.3 })
+  );
+  scene.add(nucleus);
+
+  const tailPos = new Float32Array(TAIL_N * 3);
+  const tailRandA = new Float32Array(TAIL_N);
+  const tailRandS = new Float32Array(TAIL_N);
+  for (let i = 0; i < TAIL_N; i++) {
+    tailRandA[i] = Math.random() * Math.PI * 2;
+    tailRandS[i] = Math.random() * 0.5 + 0.5;
+  }
+  const tailGeo = new THREE.BufferGeometry();
+  tailGeo.setAttribute('position', new THREE.BufferAttribute(tailPos, 3));
+  const tailPts = new THREE.Points(tailGeo, new THREE.PointsMaterial({
+    size: 0.9,
+    map: cometSpriteTex,
+    blending: THREE.AdditiveBlending,
+    transparent: true,
+    depthWrite: false,
+    sizeAttenuation: true,
+    opacity: 0.75,
+  }));
+  scene.add(tailPts);
+
+  return { def, a, e, b, cfoc, inclRad, M0, nucleus, tailPts, tailPos, tailGeo, tailRandA, tailRandS, orbitGroup };
+});
+
+function updateComets(elapsed) {
+  comets.forEach(cm => {
+    const { def, a, e, inclRad, M0, nucleus, tailPts, tailPos, tailGeo, tailRandA, tailRandS } = cm;
+    const M = M0 + (elapsed / def.periodS) * Math.PI * 2;
+    const E = solveKepler(M, e);
+    const sinHalf = Math.sin(E / 2);
+    const cosHalf = Math.cos(E / 2);
+    const v = 2 * Math.atan2(Math.sqrt(1 + e) * sinHalf, Math.sqrt(1 - e) * cosHalf);
+    const r = a * (1 - e * Math.cos(E));
+    const xOrb = r * Math.cos(v);
+    const zOrb = r * Math.sin(v);
+
+    const cosI = Math.cos(inclRad);
+    const sinI = Math.sin(inclRad);
+    const wx = xOrb;
+    const wy = -zOrb * sinI;
+    const wz =  zOrb * cosI;
+    nucleus.position.set(wx, wy, wz);
+
+    // anti-sun direction (away from origin)
+    const len = Math.sqrt(wx * wx + wy * wy + wz * wz) || 1;
+    const ax = -wx / len, ay = -wy / len, az = -wz / len;
+
+    // tail grows closer to perihelion (small r)
+    const tailLength = THREE.MathUtils.clamp((a / r) * 9, 0.5, 45);
+    const opacity    = THREE.MathUtils.clamp(1.1 - r / (a * 0.7), 0.05, 0.85);
+    tailPts.material.opacity = opacity;
+
+    // perpendicular vector for dust spread
+    const perpX = -az, perpZ = ax;  // perpendicular in XZ plane
+
+    for (let i = 0; i < TAIL_N; i++) {
+      const t = i / TAIL_N;
+      const dist = tailLength * t * t;
+      const spread = dist * 0.18 * tailRandS[i];
+      const ca = Math.cos(tailRandA[i]), sa = Math.sin(tailRandA[i]);
+      tailPos[i * 3]     = wx + ax * dist + ca * spread * perpX;
+      tailPos[i * 3 + 1] = wy + ay * dist;
+      tailPos[i * 3 + 2] = wz + az * dist + sa * spread * perpZ;
+    }
+    tailGeo.attributes.position.needsUpdate = true;
+    cm.orbitGroup.visible = showOrbits;
+  });
+}
+
 // -- Planets
 const planets = planetBodies.map((data, i) => {
   const startAngle = (i / planetBodies.length) * Math.PI * 2;
@@ -497,6 +618,7 @@ function restoreFromHash() {
     btnOrbits.classList.toggle('active', showOrbits);
     btnOrbits.setAttribute('aria-pressed', String(showOrbits));
     planets.forEach(p => { p.orbitMesh.visible = showOrbits; });
+    comets.forEach(cm => { cm.orbitGroup.visible = showOrbits; });
   }
 
   if ('labels' in params) {
@@ -745,6 +867,7 @@ btnOrbits.addEventListener('click', () => {
   btnOrbits.classList.toggle('active', showOrbits);
   btnOrbits.setAttribute('aria-pressed', showOrbits);
   planets.forEach(p => { p.orbitMesh.visible = showOrbits; });
+  comets.forEach(cm => { cm.orbitGroup.visible = showOrbits; });
   updateHash();
 });
 
@@ -1442,6 +1565,8 @@ const clock = new THREE.Clock();
       }
     }
   });
+
+  updateComets(elapsed);
 
   if (tourMode) {
     tickTourCamera(dt);
