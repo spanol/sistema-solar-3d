@@ -375,10 +375,24 @@ const planets = planetBodies.map((data, i) => {
   // while the planet sphere spins independently
   let ringMesh = null;
   if (data.hasRings) {
+    const innerR = vr * 1.6;
+    const outerR = vr * 2.8;
+    const ringGeo = new THREE.RingGeometry(innerR, outerR, 192);
+    // Remap UVs so u = normalized radius (0=inner, 1=outer); default Three.js UVs don't sample radially
+    const pos = ringGeo.attributes.position;
+    const uv = ringGeo.attributes.uv;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const r = Math.sqrt(x * x + y * y);
+      uv.setXY(i, (r - innerR) / (outerR - innerR), 0.5);
+    }
+    uv.needsUpdate = true;
+
     ringMesh = new THREE.Mesh(
-      new THREE.RingGeometry(vr * 1.6, vr * 2.8, 64),
+      ringGeo,
       new THREE.MeshBasicMaterial({
-        color: 0xd4b87a,
+        color: 0xffffff,
         side: THREE.DoubleSide,
         transparent: true,
         depthWrite: false,
@@ -388,6 +402,8 @@ const planets = planetBodies.map((data, i) => {
     tiltGroup.add(ringMesh);
 
     textureLoader.load('/textures/2k_saturn_ring_alpha.png', (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      ringMesh.material.map = tex;
       ringMesh.material.alphaMap = tex;
       ringMesh.material.needsUpdate = true;
     });
