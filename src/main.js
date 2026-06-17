@@ -916,18 +916,20 @@ function todayStr() {
   return now.toISOString().slice(0, 10);
 }
 
-function applyDatePicker(dateStr) {
+function applyDatePicker(dateStr, skipHash = false) {
   if (!dateStr) return;
   const date = new Date(dateStr + 'T12:00:00Z');
   if (isNaN(date.getTime())) return;
   setPlanetsToDate(date);
   const retrograde = isMarsRetrograde(date);
   retrogradeBadge.classList.toggle('hidden', !retrograde);
-  updateHash();
+  if (!skipHash) updateHash();
 }
 
-datePicker.value = todayStr();
-applyDatePicker(datePicker.value);
+const _initParams = parseHash();
+const initialDate = _initParams.date || todayStr();
+datePicker.value = initialDate;
+applyDatePicker(initialDate, true);
 
 datePicker.addEventListener('change', () => {
   applyDatePicker(datePicker.value);
@@ -1345,6 +1347,7 @@ document.addEventListener('keydown', e => {
       break;
     case 'Escape':
       if (!shortcutsOverlay.classList.contains('hidden')) toggleShortcuts();
+      else if (tourMode) stopTour();
       else if (viewMode === 'front') backToTop();
       break;
     case ' ':
