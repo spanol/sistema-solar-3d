@@ -15,6 +15,20 @@
         <button id="ctrl-rotation" class="ctrl-toggle active" aria-pressed="true">▶ Rotação</button>
         <button id="ctrl-real-scale" class="ctrl-toggle" aria-pressed="false">⊖ Dist. Real</button>
         <button id="btn-quality" class="ctrl-toggle" aria-pressed="false" aria-label="Configurações de qualidade">⚙ Qualidade</button>
+        <button id="btn-tour" class="ctrl-toggle" aria-pressed="false" aria-label="Tour cinematográfico">&#x1F3AC; Tour</button>
+      </div>
+
+      <div id="tour-overlay" class="hidden" aria-live="polite">
+        <div id="tour-caption">
+          <p id="tour-body-name"></p>
+          <p id="tour-body-hint"></p>
+        </div>
+        <div id="tour-controls">
+          <button id="tour-prev" aria-label="Stop anterior">&#8592;</button>
+          <button id="tour-play-pause" aria-label="Pausar tour">&#9646;&#9646;</button>
+          <button id="tour-next" aria-label="Próximo stop">&#8594;</button>
+          <button id="tour-exit" aria-label="Sair do tour">&#x2715; Sair</button>
+        </div>
       </div>
 
       <div id="quality-panel" class="hidden" role="dialog" aria-label="Configurações de qualidade">

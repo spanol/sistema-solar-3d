@@ -813,3 +813,95 @@ html, body {
     width: 200px;
   }
 }
+
+/* ── Cinematic tour overlay ──────────────────────────────────────── */
+#tour-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 2.5rem;
+  pointer-events: none;
+  z-index: 20;
+}
+
+#tour-overlay.hidden {
+  display: none;
+}
+
+#tour-caption {
+  text-align: center;
+  margin-bottom: 1.2rem;
+  padding: 0 1rem;
+}
+
+#tour-body-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--card-accent);
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+  margin-bottom: 0.35rem;
+}
+
+#tour-body-hint {
+  font-size: 0.92rem;
+  color: rgba(204, 228, 255, 0.78);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.85);
+  max-width: 480px;
+  line-height: 1.5;
+}
+
+#tour-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(5, 8, 18, 0.82);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 0.45rem 0.6rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: all;
+}
+
+#tour-controls button {
+  background: transparent;
+  border: 1px solid rgba(79, 163, 224, 0.25);
+  color: rgba(140, 190, 255, 0.72);
+  padding: 0.35rem 0.7rem;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-family: inherit;
+  min-height: 36px;
+  min-width: 36px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+#tour-controls button:hover {
+  background: rgba(79, 163, 224, 0.12);
+  border-color: rgba(79, 163, 224, 0.45);
+  color: var(--card-text);
+}
+
+#tour-controls button:focus-visible {
+  outline: 2px solid var(--card-accent);
+  outline-offset: 2px;
+}
+
+#tour-exit {
+  color: rgba(200, 210, 255, 0.55) !important;
+}
+
+@media (max-width: 600px) {
+  #tour-body-name {
+    font-size: 1.25rem;
+  }
+  #tour-body-hint {
+    font-size: 0.82rem;
+  }
+}
