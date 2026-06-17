@@ -449,6 +449,16 @@ const cardPrev     = document.getElementById('card-prev');
 const cardNext     = document.getElementById('card-next');
 document.getElementById('card-close').addEventListener('click', backToTop);
 
+const btnCopyLink = document.getElementById('card-copy-link');
+let copyResetTimer = null;
+btnCopyLink.addEventListener('click', () => {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    btnCopyLink.textContent = '✓ Copiado!';
+    clearTimeout(copyResetTimer);
+    copyResetTimer = setTimeout(() => { btnCopyLink.textContent = '🔗 Copiar link'; }, 2000);
+  });
+});
+
 // -- Calculator DOM
 const calcSection      = document.getElementById('card-calculators');
 const calcWeightBlock  = document.getElementById('calc-weight-block');

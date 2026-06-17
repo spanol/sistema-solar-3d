@@ -152,6 +152,33 @@ html, body {
   border-radius: 0 4px 4px 0;
 }
 
+#card-copy-link {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--card-muted);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+  min-height: 40px;
+  margin-bottom: 0.45rem;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+#card-copy-link:hover {
+  background: rgba(79, 163, 224, 0.08);
+  border-color: rgba(79, 163, 224, 0.35);
+  color: var(--card-text);
+}
+
+#card-copy-link:focus-visible {
+  outline: 2px solid var(--card-accent);
+  outline-offset: 2px;
+}
+
 #card-close {
   display: block;
   width: 100%;
