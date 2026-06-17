@@ -794,11 +794,54 @@ function navigatePlanet(dir) {
 cardPrev.addEventListener('click', () => navigatePlanet(-1));
 cardNext.addEventListener('click', () => navigatePlanet(1));
 
+// -- Shortcuts overlay
+const shortcutsOverlay = document.getElementById('shortcuts-overlay');
+const btnShortcuts     = document.getElementById('btn-shortcuts');
+
+function toggleShortcuts() {
+  shortcutsOverlay.classList.toggle('hidden');
+}
+
+btnShortcuts.addEventListener('click', toggleShortcuts);
+shortcutsOverlay.addEventListener('click', e => {
+  if (e.target === shortcutsOverlay) toggleShortcuts();
+});
+
+// -- Unified keyboard handler
 document.addEventListener('keydown', e => {
-  if (viewMode === 'front') {
-    if (e.key === 'ArrowLeft')  navigatePlanet(-1);
-    if (e.key === 'ArrowRight') navigatePlanet(1);
-    if (e.key === 'Escape')     backToTop();
+  // Suppress browser native page zoom (Ctrl/⌘ + wheel, +/-/0)
+  if ((e.ctrlKey || e.metaKey) && ['+', '-', '=', '0'].includes(e.key)) {
+    e.preventDefault();
+    return;
+  }
+
+  // Don't capture shortcuts when the user is typing in a form field
+  const tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+  switch (e.key) {
+    case 'ArrowLeft':
+      if (viewMode === 'front') navigatePlanet(-1);
+      break;
+    case 'ArrowRight':
+      if (viewMode === 'front') navigatePlanet(1);
+      break;
+    case 'Escape':
+      if (!shortcutsOverlay.classList.contains('hidden')) toggleShortcuts();
+      else if (viewMode === 'front') backToTop();
+      break;
+    case ' ':
+      e.preventDefault();
+      toggleRotation();
+      break;
+    case '?':
+      toggleShortcuts();
+      break;
+    default:
+      if (e.key >= '1' && e.key <= '8' && !e.ctrlKey && !e.metaKey && !e.altKey && !cam.animating) {
+        const idx = parseInt(e.key, 10) - 1;
+        if (idx < planets.length) selectPlanet(planets[idx]);
+      }
   }
 });
 
@@ -914,15 +957,10 @@ canvas.addEventListener('touchmove', e => {
   }
 }, { passive: false });
 
-// Suppress the browser's native page zoom (Ctrl/⌘ + wheel, +/-/0).
+// Suppress the browser's native page zoom (Ctrl/⌘ + wheel).
 window.addEventListener('wheel', e => {
   if (e.ctrlKey) e.preventDefault();
 }, { passive: false });
-window.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && ['+', '-', '=', '0'].includes(e.key)) {
-    e.preventDefault();
-  }
-});
 
 // -- Post-processing bloom (skipped on mobile to preserve FPS)
 const isMobile = navigator.maxTouchPoints > 0 && window.innerWidth < 768;
