@@ -11,7 +11,7 @@ const planetBodies = allBodies.filter(b => !b.isStar);
 
 // -- Renderer
 const canvas = document.getElementById('solar-canvas');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -1017,6 +1017,40 @@ function navigatePlanet(dir) {
 
 cardPrev.addEventListener('click', () => navigatePlanet(-1));
 cardNext.addEventListener('click', () => navigatePlanet(1));
+
+// -- Screenshot / Photo mode
+const btnScreenshot = document.getElementById('btn-screenshot');
+btnScreenshot.addEventListener('click', () => {
+  // Ensure WebGL frame is rendered
+  if (bloomEnabled) {
+    composer.render();
+  } else {
+    renderer.render(scene, camera);
+  }
+
+  // Composite scene + credit overlay on a 2D canvas
+  const gl = renderer.domElement;
+  const oc = document.createElement('canvas');
+  oc.width  = gl.width;
+  oc.height = gl.height;
+  const ctx = oc.getContext('2d');
+  ctx.drawImage(gl, 0, 0);
+
+  // Credit overlay
+  const pr  = Math.min(window.devicePixelRatio, 2);
+  const fSz = Math.round(13 * pr);
+  ctx.font = `${fSz}px 'Segoe UI', system-ui, sans-serif`;
+  ctx.fillStyle = 'rgba(160,200,255,0.75)';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  const pad = Math.round(14 * pr);
+  ctx.fillText('Sistema Solar 3D', oc.width - pad, oc.height - pad);
+
+  const a = document.createElement('a');
+  a.download = `sistema-solar-${new Date().toISOString().slice(0,10)}.png`;
+  a.href = oc.toDataURL('image/png');
+  a.click();
+});
 
 // -- Shortcuts overlay
 const shortcutsOverlay = document.getElementById('shortcuts-overlay');
