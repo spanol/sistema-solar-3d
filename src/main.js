@@ -377,7 +377,7 @@ const planets = planetBodies.map((data, i) => {
   if (data.hasRings) {
     const innerR = vr * 1.6;
     const outerR = vr * 2.8;
-    const ringGeo = new THREE.RingGeometry(innerR, outerR, 192);
+    const ringGeo = new THREE.RingGeometry(innerR, outerR, 192, 4);
     // Remap UVs so u = normalized radius (0=inner, 1=outer); default Three.js UVs don't sample radially
     const pos = ringGeo.attributes.position;
     const uv = ringGeo.attributes.uv;
@@ -389,21 +389,43 @@ const planets = planetBodies.map((data, i) => {
     }
     uv.needsUpdate = true;
 
+    // Procedural radial color gradient: C ring → B ring → Cassini gap → A ring → outer fade
+    const ringCanvas = document.createElement('canvas');
+    ringCanvas.width = 512; ringCanvas.height = 4;
+    const rCtx = ringCanvas.getContext('2d');
+    const rGrad = rCtx.createLinearGradient(0, 0, 512, 0);
+    rGrad.addColorStop(0.00, 'rgba(155,125,80,0.10)');
+    rGrad.addColorStop(0.12, 'rgba(162,132,87,0.22)');
+    rGrad.addColorStop(0.18, 'rgba(218,192,138,0.88)');
+    rGrad.addColorStop(0.30, 'rgba(238,208,150,0.97)');
+    rGrad.addColorStop(0.45, 'rgba(228,200,144,0.93)');
+    rGrad.addColorStop(0.500, 'rgba(55,44,29,0.08)');
+    rGrad.addColorStop(0.535, 'rgba(22,18,12,0.01)');
+    rGrad.addColorStop(0.570, 'rgba(55,44,29,0.08)');
+    rGrad.addColorStop(0.620, 'rgba(200,174,124,0.80)');
+    rGrad.addColorStop(0.730, 'rgba(210,184,132,0.84)');
+    rGrad.addColorStop(0.820, 'rgba(190,165,118,0.70)');
+    rGrad.addColorStop(0.900, 'rgba(148,128,90,0.30)');
+    rGrad.addColorStop(1.000, 'rgba(92,80,56,0.03)');
+    rCtx.fillStyle = rGrad;
+    rCtx.fillRect(0, 0, 512, 4);
+    const ringColorTex = new THREE.CanvasTexture(ringCanvas);
+
     ringMesh = new THREE.Mesh(
       ringGeo,
-      new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        side: THREE.DoubleSide,
+      new THREE.MeshLambertMaterial({
+        map: ringColorTex,
+        emissive: new THREE.Color(0.15, 0.12, 0.06),
         transparent: true,
+        side: THREE.DoubleSide,
         depthWrite: false,
       })
     );
     ringMesh.rotation.x = -Math.PI / 2;  // equatorial plane; parent tiltGroup provides the visual tilt
     tiltGroup.add(ringMesh);
 
+    // PNG alpha strip (left=inner, right=outer with radial UVs) refines the ring structure
     textureLoader.load('/textures/2k_saturn_ring_alpha.png', (tex) => {
-      tex.colorSpace = THREE.SRGBColorSpace;
-      ringMesh.material.map = tex;
       ringMesh.material.alphaMap = tex;
       ringMesh.material.needsUpdate = true;
     });
