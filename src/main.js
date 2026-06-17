@@ -181,27 +181,34 @@ textureLoader.load(PLANET_TEXTURES.sol, (tex) => {
   ));
 });
 
-// -- Asteroid Belt (procedural Points between Mars r=21 and Jupiter r=30)
-(function buildAsteroidBelt() {
+// -- Asteroid Belt
+function makeAsteroidBelt(innerR, outerR) {
   const count = 2000;
   const pos = new Float32Array(count * 3);
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const r = 22.5 + Math.random() * 5.0;
+    const r = innerR + Math.random() * (outerR - innerR);
     pos[i * 3]     = Math.cos(angle) * r;
     pos[i * 3 + 1] = (Math.random() - 0.5) * 1.2;
     pos[i * 3 + 2] = Math.sin(angle) * r;
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({
+  return new THREE.Points(geo, new THREE.PointsMaterial({
     color: 0x998877,
     size: 0.22,
     sizeAttenuation: true,
     transparent: true,
     opacity: 0.75,
-  })));
-})();
+  }));
+}
+
+const asteroidBeltCompressed = makeAsteroidBelt(22.5, 27.5);
+// Real-scale belt: 2.2–3.2 AU at 16 units/AU
+const asteroidBeltReal = makeAsteroidBelt(35.2, 51.2);
+asteroidBeltReal.material.opacity = 0;
+scene.add(asteroidBeltCompressed);
+scene.add(asteroidBeltReal);
 
 // -- Planets
 const planets = planetBodies.map((data, i) => {
@@ -270,6 +277,17 @@ const planets = planetBodies.map((data, i) => {
 const meshList = planets.map(p => p.mesh);
 // clickTargets includes rings so clicking Saturn's ring also selects the planet
 const clickTargets = planets.flatMap(p => p.ringMesh ? [p.mesh, p.ringMesh] : [p.mesh]);
+
+// -- Real-scale orbit radii: 1 AU = 16 scene units (Earth compressed orbit at 149.6 Mkm)
+const SCENE_UNITS_PER_MKM = 16 / 149.6;
+planets.forEach(p => {
+  p.realOrbitRadius    = p.data.distanceFromSunMkm * SCENE_UNITS_PER_MKM;
+  p.currentOrbitRadius = p.data.orbitRadius;
+  p.targetOrbitRadius  = p.data.orbitRadius;
+});
+
+const TOP_CAM_COMPRESSED = new THREE.Vector3(0, 130, 32);
+const TOP_CAM_REAL       = new THREE.Vector3(0, 560, 32);
 
 // -- Moons
 const allMoons = [];
@@ -374,6 +392,8 @@ let hoveredPlanet = null;
 let showOrbits = true;
 let showLabels = true;
 let timeSpeed = 1;
+let realScale      = false;
+let realScaleLerpT = 0;
 
 // -- URL hash deep-link
 function parseHash() {
@@ -393,6 +413,7 @@ function serializeHash() {
   parts.push(`orbits=${showOrbits ? 1 : 0}`);
   parts.push(`labels=${showLabels ? 1 : 0}`);
   parts.push(`speed=${timeSpeed}`);
+  if (realScale) parts.push('realscale=1');
   return '#' + parts.join('&');
 }
 
@@ -426,6 +447,20 @@ function restoreFromHash() {
       btnRotation.setAttribute('aria-pressed', String(running));
       btnRotation.textContent = running ? '▶ Rotação' : '⏸ Rotação';
     }
+  }
+
+  if (params.realscale && params.realscale !== '0') {
+    realScale = true;
+    btnRealScale.classList.add('active');
+    btnRealScale.setAttribute('aria-pressed', 'true');
+    planets.forEach(p => {
+      p.currentOrbitRadius = p.realOrbitRadius;
+      p.targetOrbitRadius  = p.realOrbitRadius;
+    });
+    cam.pos.copy(TOP_CAM_REAL);
+    cam.tgtPos.copy(TOP_CAM_REAL);
+    camera.position.copy(cam.pos);
+    camera.lookAt(cam.lookAt);
   }
 
   if (params.planet) {
@@ -655,6 +690,23 @@ function toggleRotation() {
 }
 btnRotation.addEventListener('click', toggleRotation);
 
+const btnRealScale = document.getElementById('ctrl-real-scale');
+btnRealScale.addEventListener('click', () => {
+  if (viewMode !== 'top' || cam.animating) return;
+  realScale = !realScale;
+  btnRealScale.classList.toggle('active', realScale);
+  btnRealScale.setAttribute('aria-pressed', String(realScale));
+  planets.forEach(p => {
+    p.targetOrbitRadius = realScale ? p.realOrbitRadius : p.data.orbitRadius;
+  });
+  cam.tgtUp.set(0, 0, -1);
+  moveCameraTo(
+    (realScale ? TOP_CAM_REAL : TOP_CAM_COMPRESSED).clone(),
+    new THREE.Vector3(0, 0, 0)
+  );
+  updateHash();
+});
+
 function showCard(data) {
   currentCardData = data;
   cardName.textContent     = data.name;
@@ -756,7 +808,7 @@ function selectPlanet(p) {
   viewControls.classList.add('hidden');
 
   const { x, z } = p.group.position;
-  const or = p.data.orbitRadius;
+  const or = Math.sqrt(x * x + z * z) || p.data.orbitRadius;
   const camDist = p.vr * 8 + 10;
 
   // 3/4 elevation angle: camera sits ~27–33° above the planet's equator
@@ -790,7 +842,7 @@ function backToTop() {
   viewControls.classList.remove('hidden');
 
   cam.tgtUp.set(0, 0, -1);
-  moveCameraTo(new THREE.Vector3(0, 130, 32), new THREE.Vector3(0, 0, 0));
+  moveCameraTo((realScale ? TOP_CAM_REAL : TOP_CAM_COMPRESSED).clone(), new THREE.Vector3(0, 0, 0));
 }
 
 // -- Sequential navigation
@@ -931,7 +983,7 @@ function applyZoom(deltaY) {
   let dist = offset.length();
   if (dist < 1e-3) return;
   dist *= Math.exp(deltaY * ZOOM.step);
-  dist = Math.min(ZOOM.max, Math.max(ZOOM.min, dist));
+  dist = Math.min(realScale ? 1400 : ZOOM.max, Math.max(ZOOM.min, dist));
   offset.setLength(dist);
   cam.pos.copy(cam.lookAt).add(offset);
   cam.tgtPos.copy(cam.pos);
@@ -1022,12 +1074,20 @@ const clock = new THREE.Clock();
   const elapsed = clock.getElapsedTime();
 
   const mult = viewMode === 'top' ? timeSpeed : 0.06;
+  const orbitLerpK = Math.min(1, dt * 2.0);
   planets.forEach(p => {
+    p.currentOrbitRadius = THREE.MathUtils.lerp(p.currentOrbitRadius, p.targetOrbitRadius, orbitLerpK);
     p.angle += p.speed * dt * 60 * mult;
-    p.group.position.x = Math.cos(p.angle) * p.data.orbitRadius;
-    p.group.position.z = Math.sin(p.angle) * p.data.orbitRadius;
-    p.mesh.rotation.y += dt * 0.2;  // spins around tiltGroup's tilted local Y
+    p.group.position.x = Math.cos(p.angle) * p.currentOrbitRadius;
+    p.group.position.z = Math.sin(p.angle) * p.currentOrbitRadius;
+    p.mesh.rotation.y += dt * 0.2;
+    p.orbitMesh.scale.setScalar(p.currentOrbitRadius / p.data.orbitRadius);
   });
+
+  // Asteroid belt cross-fade between compressed and real-scale positions
+  realScaleLerpT = THREE.MathUtils.lerp(realScaleLerpT, realScale ? 1 : 0, orbitLerpK);
+  asteroidBeltCompressed.material.opacity = 0.75 * (1 - realScaleLerpT);
+  asteroidBeltReal.material.opacity       = 0.75 * realScaleLerpT;
 
   // Moon orbits – always accumulate, visible only in front view of parent
   const isFront = viewMode === 'front';
