@@ -4,6 +4,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import allBodies from './data/planets.json';
+import * as Astronomy from 'astronomy-engine';
 
 const sunData = allBodies.find(b => b.isStar);
 const planetBodies = allBodies.filter(b => !b.isStar);
@@ -395,6 +396,70 @@ let timeSpeed = 1;
 let realScale      = false;
 let realScaleLerpT = 0;
 
+// -- Device detection + quality state
+const isMobile = navigator.maxTouchPoints > 0 && window.innerWidth < 768;
+let qualityPixelRatio = isMobile ? 0.75 : 1.0;
+let bloomEnabled = !isMobile;
+let starDensity = isMobile ? 'low' : 'high';
+let composer = null;
+
+function applyQualityPixelRatio(scale) {
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2) * scale);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function applyStarDensity(density) {
+  if (density === 'low') {
+    starGroups.forEach((g, i) => { g.visible = i === 0; });
+  } else if (density === 'medium') {
+    starGroups.forEach((g, i) => { g.visible = i <= 2; });
+  } else {
+    starGroups.forEach(g => { g.visible = true; });
+  }
+}
+
+// -- Astronomy / Modo Hoje
+const ASTRO_BODY = {
+  mercury: 'Mercury',
+  venus:   'Venus',
+  earth:   'Earth',
+  mars:    'Mars',
+  jupiter: 'Jupiter',
+  saturn:  'Saturn',
+  uranus:  'Uranus',
+  neptune: 'Neptune',
+};
+
+function helioLonRad(bodyName, date) {
+  return Astronomy.EclipticLongitude(bodyName, date) * Math.PI / 180;
+}
+
+function setPlanetsToDate(date) {
+  planets.forEach(p => {
+    const body = ASTRO_BODY[p.data.id];
+    if (!body) return;
+    p.angle = helioLonRad(body, date);
+    p.group.position.x = Math.cos(p.angle) * p.currentOrbitRadius;
+    p.group.position.z = Math.sin(p.angle) * p.currentOrbitRadius;
+  });
+}
+
+function isMarsRetrograde(date) {
+  const dt1 = new Date(date.getTime() + 86400000);
+  function geoLon(d) {
+    const gv = Astronomy.GeoVector('Mars', d, false);
+    const ec = Astronomy.Ecliptic(gv);
+    return ec.elon;
+  }
+  const lon0 = geoLon(date);
+  const lon1 = geoLon(dt1);
+  let delta = lon1 - lon0;
+  if (delta > 180) delta -= 360;
+  if (delta < -180) delta += 360;
+  return delta < 0;
+}
+
 // -- URL hash deep-link
 function parseHash() {
   const h = location.hash.slice(1);
@@ -414,6 +479,8 @@ function serializeHash() {
   parts.push(`labels=${showLabels ? 1 : 0}`);
   parts.push(`speed=${timeSpeed}`);
   if (realScale) parts.push('realscale=1');
+  const dp = document.getElementById('date-picker');
+  if (dp && dp.value) parts.push(`date=${encodeURIComponent(dp.value)}`);
   return '#' + parts.join('&');
 }
 
@@ -466,6 +533,14 @@ function restoreFromHash() {
   if (params.planet) {
     const p = planets.find(pl => pl.data.id === params.planet);
     if (p) selectPlanet(p);
+  }
+
+  if (params.date) {
+    const dp = document.getElementById('date-picker');
+    if (dp) {
+      dp.value = params.date;
+      applyDatePicker(params.date);
+    }
   }
 }
 
@@ -707,6 +782,90 @@ btnRealScale.addEventListener('click', () => {
   updateHash();
 });
 
+// -- Date controls
+const dateControls     = document.getElementById('date-controls');
+const datePicker       = document.getElementById('date-picker');
+const btnHoje          = document.getElementById('btn-hoje');
+const retrogradeBadge  = document.getElementById('retrograde-badge');
+
+function todayStr() {
+  const now = new Date();
+  return now.toISOString().slice(0, 10);
+}
+
+function applyDatePicker(dateStr) {
+  if (!dateStr) return;
+  const date = new Date(dateStr + 'T12:00:00Z');
+  if (isNaN(date.getTime())) return;
+  setPlanetsToDate(date);
+  const retrograde = isMarsRetrograde(date);
+  retrogradeBadge.classList.toggle('hidden', !retrograde);
+  updateHash();
+}
+
+datePicker.value = todayStr();
+applyDatePicker(datePicker.value);
+
+datePicker.addEventListener('change', () => {
+  applyDatePicker(datePicker.value);
+});
+
+btnHoje.addEventListener('click', () => {
+  datePicker.value = todayStr();
+  applyDatePicker(datePicker.value);
+});
+
+// -- Quality panel
+const btnQuality   = document.getElementById('btn-quality');
+const qualityPanel = document.getElementById('quality-panel');
+
+btnQuality.addEventListener('click', e => {
+  e.stopPropagation();
+  qualityPanel.classList.toggle('hidden');
+});
+
+document.addEventListener('click', e => {
+  if (!qualityPanel.classList.contains('hidden') &&
+      !qualityPanel.contains(e.target) && e.target !== btnQuality) {
+    qualityPanel.classList.add('hidden');
+  }
+});
+
+const qualityBloomBtn = document.getElementById('quality-bloom');
+function syncBloomBtn() {
+  qualityBloomBtn.textContent = bloomEnabled ? 'Ligado' : 'Desligado';
+  qualityBloomBtn.classList.toggle('active', bloomEnabled);
+  qualityBloomBtn.setAttribute('aria-pressed', String(bloomEnabled));
+}
+qualityBloomBtn.addEventListener('click', () => {
+  bloomEnabled = !bloomEnabled;
+  syncBloomBtn();
+});
+syncBloomBtn();
+
+function syncSegmented(id, val) {
+  document.querySelectorAll('#' + id + ' [data-val]').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === String(val));
+  });
+}
+
+document.querySelectorAll('#quality-resolution [data-val]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    qualityPixelRatio = parseFloat(btn.dataset.val);
+    applyQualityPixelRatio(qualityPixelRatio);
+    syncSegmented('quality-resolution', qualityPixelRatio);
+  });
+});
+syncSegmented('quality-resolution', qualityPixelRatio);
+
+document.querySelectorAll('#quality-stars [data-val]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    starDensity = btn.dataset.val;
+    applyStarDensity(starDensity);
+    syncSegmented('quality-stars', starDensity);
+  });
+});
+syncSegmented('quality-stars', starDensity);
 function showCard(data) {
   currentCardData = data;
   cardName.textContent     = data.name;
@@ -806,6 +965,8 @@ function selectPlanet(p) {
   hideCard();
   hoveredPlanet = null;
   viewControls.classList.add('hidden');
+  dateControls.classList.add('hidden');
+  qualityPanel.classList.add('hidden');
 
   const { x, z } = p.group.position;
   const or = Math.sqrt(x * x + z * z) || p.data.orbitRadius;
@@ -840,6 +1001,7 @@ function backToTop() {
   updateHash();
   hint.style.opacity = '1';
   viewControls.classList.remove('hidden');
+  dateControls.classList.remove('hidden');
 
   cam.tgtUp.set(0, 0, -1);
   moveCameraTo((realScale ? TOP_CAM_REAL : TOP_CAM_COMPRESSED).clone(), new THREE.Vector3(0, 0, 0));
@@ -1024,29 +1186,28 @@ window.addEventListener('wheel', e => {
   if (e.ctrlKey) e.preventDefault();
 }, { passive: false });
 
-// -- Post-processing bloom (skipped on mobile to preserve FPS)
-const isMobile = navigator.maxTouchPoints > 0 && window.innerWidth < 768;
-let composer = null;
+// -- Post-processing bloom (always created; bloomEnabled controls whether it renders)
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  0.55,  // strength
+  0.45,  // radius
+  0.90   // threshold — sol HDR >1.0 (setRGB); planetas ficam abaixo com luma ~0.6-0.85
+);
+composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(bloomPass);
+composer.addPass(new OutputPass());
 
-if (!isMobile) {
-  const bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.55,  // strength
-    0.45,  // radius
-    0.90   // threshold — sol HDR >1.0 (setRGB); planetas ficam abaixo com luma ~0.6-0.85
-  );
-  composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
-  composer.addPass(bloomPass);
-  composer.addPass(new OutputPass());
-}
+// Apply initial quality presets
+applyQualityPixelRatio(qualityPixelRatio);
+applyStarDensity(starDensity);
 
 // -- Resize
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  if (composer) composer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
 });
 
 // -- Labels update
@@ -1157,9 +1318,10 @@ const clock = new THREE.Clock();
     fillLight.intensity = 0;
   }
 
-  if (composer) {
+  if (bloomEnabled) {
     composer.render();
   } else {
     renderer.render(scene, camera);
   }
 })();
+

@@ -574,6 +574,169 @@ html, body {
   color: var(--card-muted);
 }
 
+/* ── Date controls panel ────────────────────────────────────────── */
+#date-controls {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(5, 8, 18, 0.88);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 0.45rem 0.75rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 10;
+  transition: opacity 0.3s ease;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(100vw - 2rem);
+}
+
+#date-controls.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.date-ctrl-label {
+  font-size: 0.78rem;
+  color: var(--card-muted);
+  white-space: nowrap;
+}
+
+.date-input {
+  background: rgba(5, 10, 30, 0.65);
+  border: 1px solid rgba(79, 163, 224, 0.28);
+  border-radius: 6px;
+  color: var(--card-text);
+  font-size: 0.82rem;
+  font-family: inherit;
+  padding: 0.25rem 0.4rem;
+  outline: none;
+  cursor: pointer;
+  color-scheme: dark;
+  transition: border-color 0.2s;
+}
+
+.date-input:focus {
+  border-color: var(--card-accent);
+}
+
+.date-hoje-btn {
+  font-size: 0.78rem;
+  padding: 0.28rem 0.6rem;
+  min-height: 0;
+  height: auto;
+  white-space: nowrap;
+}
+
+#retrograde-badge {
+  font-size: 0.72rem;
+  color: #ff9944;
+  border: 1px solid rgba(255, 120, 0, 0.4);
+  border-radius: 4px;
+  padding: 0.15rem 0.45rem;
+  background: rgba(255, 80, 0, 0.08);
+  animation: retro-pulse 2s ease-in-out infinite;
+  white-space: nowrap;
+}
+
+#retrograde-badge.hidden {
+  display: none;
+}
+
+@keyframes retro-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* ── Quality settings panel ─────────────────────────────────────── */
+#quality-panel {
+  position: absolute;
+  top: 1.25rem;
+  right: calc(148px + 1.25rem + 0.75rem);
+  width: 210px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 0.9rem 1rem 0.8rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 15;
+  transition: opacity 0.2s;
+}
+
+#quality-panel.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.quality-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(140, 190, 255, 0.4);
+  margin-bottom: 0.75rem;
+}
+
+.quality-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.55rem;
+}
+
+.quality-row:last-child {
+  margin-bottom: 0;
+}
+
+.quality-label {
+  font-size: 0.79rem;
+  color: var(--card-muted);
+  flex-shrink: 0;
+}
+
+.quality-segmented {
+  display: flex;
+  gap: 0.18rem;
+}
+
+.quality-segmented button,
+.quality-toggle {
+  background: rgba(5, 10, 30, 0.65);
+  border: 1px solid rgba(79, 163, 224, 0.22);
+  color: rgba(140, 190, 255, 0.55);
+  padding: 0.2rem 0.38rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.73rem;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.quality-segmented button.active,
+.quality-toggle.active {
+  background: rgba(79, 163, 224, 0.15);
+  border-color: rgba(79, 163, 224, 0.5);
+  color: var(--card-text);
+}
+
+.quality-segmented button:hover,
+.quality-toggle:hover {
+  background: rgba(79, 163, 224, 0.1);
+  color: var(--card-text);
+}
+
+.quality-toggle {
+  min-width: 68px;
+  text-align: center;
+}
+
 /* ── Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   #view-controls {
@@ -607,5 +770,12 @@ html, body {
 
   #card-name {
     font-size: 1.3rem;
+  }
+
+  #quality-panel {
+    right: auto;
+    left: 0.75rem;
+    top: 0.75rem;
+    width: 200px;
   }
 }

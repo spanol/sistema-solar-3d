@@ -14,6 +14,31 @@
         <button id="ctrl-labels" class="ctrl-toggle active" aria-pressed="true">◉ Labels</button>
         <button id="ctrl-rotation" class="ctrl-toggle active" aria-pressed="true">▶ Rotação</button>
         <button id="ctrl-real-scale" class="ctrl-toggle" aria-pressed="false">⊖ Dist. Real</button>
+        <button id="btn-quality" class="ctrl-toggle" aria-pressed="false" aria-label="Configurações de qualidade">⚙ Qualidade</button>
+      </div>
+
+      <div id="quality-panel" class="hidden" role="dialog" aria-label="Configurações de qualidade">
+        <p class="quality-title">Qualidade</p>
+        <div class="quality-row">
+          <span class="quality-label">Resolução</span>
+          <div class="quality-segmented" id="quality-resolution">
+            <button data-val="0.5">½×</button>
+            <button data-val="0.75">¾×</button>
+            <button data-val="1">1×</button>
+          </div>
+        </div>
+        <div class="quality-row">
+          <span class="quality-label">Bloom</span>
+          <button id="quality-bloom" class="quality-toggle" aria-pressed="true">Ligado</button>
+        </div>
+        <div class="quality-row">
+          <span class="quality-label">Estrelas</span>
+          <div class="quality-segmented" id="quality-stars">
+            <button data-val="low">Poucas</button>
+            <button data-val="medium">Médio</button>
+            <button data-val="high">Todas</button>
+          </div>
+        </div>
       </div>
 
       <div id="planet-card" class="hidden">
@@ -91,6 +116,13 @@
         </div>
         <button id="card-copy-link" aria-label="Copiar link desta vista">🔗 Copiar link</button>
         <button id="card-close">← Voltar</button>
+      </div>
+
+      <div id="date-controls">
+        <span class="date-ctrl-label">📅 Data</span>
+        <input type="date" id="date-picker" class="date-input" aria-label="Data da simulação" />
+        <button id="btn-hoje" class="ctrl-toggle date-hoje-btn" aria-label="Ir para hoje">Agora</button>
+        <div id="retrograde-badge" class="hidden" title="Marte está em movimento retrógrado aparente">♂ Retrógrado</div>
       </div>
 
       <button id="btn-shortcuts" aria-label="Atalhos de teclado" title="Atalhos de teclado (?)">?</button>
