@@ -183,6 +183,20 @@ textureLoader.load(PLANET_TEXTURES.sol, (tex) => {
 });
 
 // -- Asteroid Belt
+const asteroidSpriteTex = (() => {
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+  g.addColorStop(0,    'rgba(255,255,255,1.0)');
+  g.addColorStop(0.35, 'rgba(255,255,255,0.8)');
+  g.addColorStop(0.70, 'rgba(255,255,255,0.15)');
+  g.addColorStop(1,    'rgba(255,255,255,0.0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 32, 32);
+  return new THREE.CanvasTexture(c);
+})();
+
 function makeAsteroidBelt(innerR, outerR) {
   const count = 2000;
   const pos = new Float32Array(count * 3);
@@ -199,7 +213,10 @@ function makeAsteroidBelt(innerR, outerR) {
     color: 0x998877,
     size: 0.22,
     sizeAttenuation: true,
+    map: asteroidSpriteTex,
     transparent: true,
+    depthWrite: false,
+    alphaTest: 0.01,
     opacity: 0.75,
   }));
 }
