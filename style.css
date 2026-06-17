@@ -365,6 +365,188 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Shortcuts overlay ──────────────────────────────────────────── */
+#btn-shortcuts {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.25rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(5, 8, 18, 0.82);
+  border: 1px solid var(--card-border);
+  color: rgba(140, 190, 255, 0.55);
+  font-size: 0.88rem;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 11;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+#btn-shortcuts:hover {
+  color: var(--card-text);
+  border-color: rgba(79, 163, 224, 0.45);
+  background: rgba(79, 163, 224, 0.1);
+}
+
+#btn-shortcuts:focus-visible {
+  outline: 2px solid var(--card-accent);
+  outline-offset: 2px;
+}
+
+#shortcuts-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 5, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 50;
+  transition: opacity 0.22s;
+}
+
+#shortcuts-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#shortcuts-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 1.5rem 1.8rem;
+  min-width: 270px;
+  max-width: min(360px, 88vw);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.shortcuts-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(140, 190, 255, 0.4);
+  margin-bottom: 1rem;
+}
+
+.shortcuts-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem 1rem;
+  align-items: center;
+}
+
+.shortcuts-grid kbd {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.76rem;
+  color: var(--card-accent);
+  background: rgba(79, 163, 224, 0.1);
+  border: 1px solid rgba(79, 163, 224, 0.26);
+  border-radius: 5px;
+  padding: 0.18rem 0.48rem;
+  white-space: nowrap;
+  justify-self: start;
+}
+
+.shortcuts-grid span {
+  font-size: 0.84rem;
+  color: rgba(204, 228, 255, 0.82);
+}
+
+/* ── Size comparison widget ─────────────────────────────────────── */
+#card-compare {
+  margin-top: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.compare-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.compare-dropdown-label {
+  font-size: 0.73rem;
+  color: var(--card-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.compare-select {
+  flex: 1;
+  min-width: 0;
+  background: rgba(5, 10, 30, 0.65);
+  border: 1px solid rgba(79, 163, 224, 0.28);
+  border-radius: 6px;
+  color: var(--card-text);
+  font-size: 0.82rem;
+  font-family: inherit;
+  padding: 0.28rem 0.5rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.compare-select:focus {
+  border-color: var(--card-accent);
+}
+
+.compare-select option {
+  background: #050812;
+  color: var(--card-text);
+}
+
+.compare-viewport {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(80, 140, 255, 0.12);
+  background: rgba(2, 4, 12, 0.65);
+  height: 110px;
+}
+
+#compare-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.compare-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.38rem 0.1rem 0;
+}
+
+.compare-footer-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+
+.compare-footer-right {
+  align-items: flex-end;
+}
+
+.compare-body-name {
+  font-size: 0.78rem;
+  color: var(--card-text);
+  font-weight: 600;
+}
+
+.compare-body-diam {
+  font-size: 0.70rem;
+  color: var(--card-muted);
+}
+
 /* ── Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   #view-controls {

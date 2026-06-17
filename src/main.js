@@ -498,6 +498,122 @@ function calcAge() {
 calcWeightInput.addEventListener('input', calcWeight);
 calcBirthInput.addEventListener('change', calcAge);
 
+// -- Size comparison widget
+const compareSelect = document.getElementById('compare-select');
+const compareNameA  = document.getElementById('compare-name-a');
+const compareDiamA  = document.getElementById('compare-diam-a');
+const compareNameB  = document.getElementById('compare-name-b');
+const compareDiamB  = document.getElementById('compare-diam-b');
+
+let cmpRenderer = null, cmpScene = null, cmpCamera = null;
+let cmpMeshA = null, cmpMeshB = null;
+let cmpAnimId = null;
+
+function ensureCompareRenderer() {
+  if (cmpRenderer) return;
+  const cmpCanvas = document.getElementById('compare-canvas');
+  const W = cmpCanvas.offsetWidth  || 272;
+  const H = cmpCanvas.offsetHeight || 110;
+
+  cmpRenderer = new THREE.WebGLRenderer({ canvas: cmpCanvas, antialias: true, alpha: true });
+  cmpRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  cmpRenderer.setSize(W, H, false); // false = don't override CSS width/height
+  cmpRenderer.outputColorSpace = THREE.SRGBColorSpace;
+
+  cmpScene  = new THREE.Scene();
+  cmpCamera = new THREE.PerspectiveCamera(40, W / H, 0.1, 300);
+  cmpCamera.position.set(0, 0, 15);
+
+  cmpScene.add(new THREE.AmbientLight(0x334466, 3.5));
+  const dLight = new THREE.DirectionalLight(0xfff8f0, 3);
+  dLight.position.set(3, 4, 5);
+  cmpScene.add(dLight);
+
+  const geo = new THREE.SphereGeometry(1, 28, 28);
+  cmpMeshA = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ roughness: 0.65, metalness: 0 }));
+  cmpMeshB = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 28), new THREE.MeshStandardMaterial({ roughness: 0.65, metalness: 0 }));
+  cmpScene.add(cmpMeshA);
+  cmpScene.add(cmpMeshB);
+}
+
+function renderComparison(dataA, dataB) {
+  ensureCompareRenderer();
+
+  const dA = dataA.diameterKm;
+  const dB = dataB.diameterKm;
+  const maxD = Math.max(dA, dB);
+  const MAX_R = 2.0;
+  const GAP   = 0.55;
+
+  const rA = (dA / maxD) * MAX_R;
+  const rB = (dB / maxD) * MAX_R;
+
+  cmpMeshA.scale.setScalar(rA);
+  cmpMeshB.scale.setScalar(rB);
+  cmpMeshA.material.color.set(dataA.color || '#8899aa');
+  cmpMeshB.material.color.set(dataB.color || '#8899aa');
+
+  // Place spheres so their combined bounding box is centered at x=0
+  // A right edge → -GAP/2 ; B left edge → +GAP/2
+  cmpMeshA.position.set(-(rB + GAP / 2), 0, 0);
+  cmpMeshB.position.set(  rA + GAP / 2,  0, 0);
+
+  // Frame camera to fit both spheres with padding
+  const halfH = rA + rB + GAP / 2;
+  const halfV = Math.max(rA, rB);
+  const vFovHalf = (cmpCamera.fov / 2) * Math.PI / 180;
+  const aspect = cmpCamera.aspect;
+  const camZH  = (halfH * 1.22) / (Math.tan(vFovHalf) * aspect);
+  const camZV  = (halfV * 1.45) / Math.tan(vFovHalf);
+  cmpCamera.position.z = Math.max(camZH, camZV, 5);
+
+  // Update footer labels
+  compareNameA.textContent = dataA.name;
+  compareDiamA.textContent = dA.toLocaleString('pt-BR') + ' km';
+  compareNameB.textContent = dataB.name;
+  compareDiamB.textContent = dB.toLocaleString('pt-BR') + ' km';
+
+  // Kick off slow-rotation animation loop
+  if (cmpAnimId) cancelAnimationFrame(cmpAnimId);
+  let lastT = null;
+  function cmpLoop(t) {
+    const dt = lastT === null ? 0 : (t - lastT) / 1000;
+    lastT = t;
+    cmpMeshA.rotation.y += dt * 0.40;
+    cmpMeshB.rotation.y += dt * 0.40;
+    cmpRenderer.render(cmpScene, cmpCamera);
+    cmpAnimId = requestAnimationFrame(cmpLoop);
+  }
+  cmpAnimId = requestAnimationFrame(cmpLoop);
+}
+
+function stopCompareAnim() {
+  if (cmpAnimId) { cancelAnimationFrame(cmpAnimId); cmpAnimId = null; }
+}
+
+function openCompare(cardData) {
+  // Populate dropdown with every body except the current one
+  compareSelect.innerHTML = '';
+  allBodies.forEach(b => {
+    if (b.id === cardData.id) return;
+    const opt = document.createElement('option');
+    opt.value = b.id;
+    opt.textContent = b.name;
+    // Default to Earth if available; otherwise keep first option
+    if (b.id === 'earth') opt.selected = true;
+    compareSelect.appendChild(opt);
+  });
+  // If earth was excluded (current planet IS earth), first option is selected by default
+  const compareData = allBodies.find(b => b.id === compareSelect.value);
+  if (compareData) renderComparison(cardData, compareData);
+}
+
+compareSelect.addEventListener('change', () => {
+  if (!currentCardData) return;
+  const compareData = allBodies.find(b => b.id === compareSelect.value);
+  if (compareData) renderComparison(currentCardData, compareData);
+});
+
 // -- View controls
 const viewControls = document.getElementById('view-controls');
 const btnOrbits    = document.getElementById('ctrl-orbits');
@@ -519,14 +635,15 @@ btnLabels.addEventListener('click', () => {
   updateHash();
 });
 
-btnRotation.addEventListener('click', () => {
+function toggleRotation() {
   timeSpeed = timeSpeed > 0 ? 0 : 1;
   const running = timeSpeed > 0;
   btnRotation.classList.toggle('active', running);
   btnRotation.setAttribute('aria-pressed', running);
   btnRotation.textContent = running ? '▶ Rotação' : '⏸ Rotação';
   updateHash();
-});
+}
+btnRotation.addEventListener('click', toggleRotation);
 
 function showCard(data) {
   currentCardData = data;
@@ -574,11 +691,14 @@ function showCard(data) {
   calcWeight();
   calcAge();
 
+  openCompare(data);
+
   hint.style.opacity = '0';
   card.classList.remove('hidden');
 }
 
 function hideCard() {
+  stopCompareAnim();
   card.classList.add('hidden');
 }
 
