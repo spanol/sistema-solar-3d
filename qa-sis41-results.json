@@ -1,0 +1,90 @@
+{
+  "screenshots": [
+    "qa-sis41-top-view.png",
+    "qa-sis41-stars-detail.png",
+    "qa-sis41-earth-front.png",
+    "qa-sis41-saturn-front.png",
+    "qa-sis41-top-final.png",
+    "qa-sis41-mobile-top.png",
+    "qa-sis41-mobile-earth.png"
+  ],
+  "consoleErrors": [],
+  "consoleWarnings": [
+    "[.WebGL-0x4ec001bc200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[.WebGL-0x4ec001bc200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[.WebGL-0x4ec001bc200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[.WebGL-0x4ec001bc200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+  ],
+  "observations": {
+    "topView": {
+      "hasCanvas": true,
+      "canvasWidth": 1440,
+      "canvasHeight": 900,
+      "visibleLabels": [
+        "Mercúrio",
+        "Vênus",
+        "Terra",
+        "Marte",
+        "Júpiter",
+        "Saturno",
+        "Urano",
+        "Netuno",
+        "Lua",
+        "Fobos",
+        "Deimos",
+        "Io",
+        "Europa",
+        "Ganimedes",
+        "Calisto",
+        "Titã"
+      ],
+      "labelCount": 16
+    },
+    "earthFront": {
+      "cardVisible": true,
+      "cardName": "Terra",
+      "cardRect": {
+        "left": 24,
+        "top": 54,
+        "right": 344,
+        "bottom": 846,
+        "width": 320,
+        "height": 792
+      },
+      "canvasRect": {
+        "left": 0,
+        "top": 0,
+        "right": 1440,
+        "bottom": 900,
+        "width": 1440,
+        "height": 900
+      },
+      "cardOnLeft": true,
+      "cardOverlapsPlanetZone": false
+    },
+    "saturnFront": {
+      "cardVisible": true,
+      "cardName": "Saturno",
+      "cardRect": {
+        "left": 24,
+        "top": 54,
+        "right": 344,
+        "bottom": 846,
+        "width": 320,
+        "height": 792
+      },
+      "canvasRect": {
+        "left": 0,
+        "top": 0,
+        "right": 1440,
+        "bottom": 900,
+        "width": 1440,
+        "height": 900
+      },
+      "cardOnLeft": true
+    },
+    "mobile": {
+      "additionalErrors": []
+    }
+  }
+}

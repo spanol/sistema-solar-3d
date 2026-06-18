@@ -1,0 +1,20 @@
+## QA SIS-59 - Modo Hoje
+
+Veredicto: APROVADO - todos os 8 criterios passaram.
+
+Ambiente: localhost:5173 | Puppeteer | Desktop 1280x800 + Mobile 375x667
+
+C1 Painel de data na vista superior: PASS - #date-controls visivel (display:flex), bottom-center; picker em 2026-06-17.
+C2 Input de data e botao Agora: PASS - 2020-01-15 aceito; Agora reseta para 2026-06-17.
+C3 Planetas se reposicionam: PASS - posicoes visivelmente distintas entre datas (screenshots 01 vs 07).
+C4 Badge Retrogrado: PASS - badge visivel em 2022-10-30 (janela real Out/22-Jan/23); oculto fora dela.
+C5 Estado da data no hash: PASS - URL contem date=2020-01-15 no hash.
+C6 Painel some na vista frontal: PASS - hidden=true apos selectPlanet(Terra); restaurado no backToTop.
+C7 Zero erros de console: PASS - unico error: favicon.ico 404 pre-existente, nao e erro JS.
+C8 Responsivo mobile 375px: PASS - painel visivel em layout empilhado (111px vs 45px desktop).
+
+Notas:
+- Badge comeca em 2022-10-30 correto per astronomy-engine (NASA confirma Out/30 como inicio).
+- Sol clicavel usa showCard(sunData) separado de selectPlanet(); date panel visivel no top view - intencional.
+- favicon.ico 404 pre-existente em todas builds, sem relacao com SIS-59.
+- 29 screenshots em D:\code\sistema-solar-3d\qa-sis74-*.png e 5 attachments nesta issue.

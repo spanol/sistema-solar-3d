@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-06-15T23:14:09.773Z",
+  "visiblePlanetLabels": [
+    "Mercúrio",
+    "Vênus",
+    "Terra",
+    "Marte",
+    "Júpiter",
+    "Saturno",
+    "Urano",
+    "Netuno",
+    "Lua",
+    "Fobos",
+    "Deimos",
+    "Io",
+    "Europa",
+    "Ganimedes",
+    "Calisto",
+    "Titã"
+  ],
+  "consoleErrors": [],
+  "consoleMessages": [
+    "[debug] [vite] connecting...",
+    "[debug] [vite] connected.",
+    "[warning] [.WebGL-0x4294001c4200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[warning] [.WebGL-0x4294001c4200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[warning] [.WebGL-0x4294001c4200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[warning] [.WebGL-0x4294001c4200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+  ],
+  "mobileErrors": []
+}

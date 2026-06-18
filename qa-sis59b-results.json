@@ -1,0 +1,52 @@
+{
+  "passed": 7,
+  "failed": 2,
+  "total": 9,
+  "results": [
+    {
+      "id": "T5a-not-retrograde-nov2024",
+      "status": "PASS",
+      "note": "Badge oculto em 2024-11-01 — Marte não era retrógrado (correto)"
+    },
+    {
+      "id": "T5b-retrograde-dec2024",
+      "status": "PASS",
+      "note": "Badge ♂ Retrógrado visível em 2024-12-15 — Marte retrógrado (correto)"
+    },
+    {
+      "id": "T5c-retrograde-jan2025",
+      "status": "PASS",
+      "note": "Badge visível em 2025-01-15 — Marte ainda retrógrado (correto)"
+    },
+    {
+      "id": "T5d-direct-mar2025",
+      "status": "PASS",
+      "note": "Badge oculto em 2025-03-01 — Marte direto novamente (correto)"
+    },
+    {
+      "id": "T7-panel-hides-on-planet",
+      "status": "FAIL",
+      "note": "Painel de data ainda visível na vista frontal do planeta"
+    },
+    {
+      "id": "T8-panel-returns",
+      "status": "FAIL",
+      "note": "Erro ao tentar voltar: elementHandle.click: Element is not attached to the DOM\nCall log:\n\u001b[2m  - attempting click action\u001b[2"
+    },
+    {
+      "id": "T9-console-errors",
+      "status": "PASS",
+      "note": "Zero erros no console na sessão de testes"
+    },
+    {
+      "id": "T10-mobile-responsive",
+      "status": "PASS",
+      "note": "Canvas + painel de data visíveis em 375×667"
+    },
+    {
+      "id": "T10b-mobile-console",
+      "status": "PASS",
+      "note": "Zero erros de console no mobile"
+    }
+  ]
+}

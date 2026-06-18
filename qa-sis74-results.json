@@ -1,0 +1,85 @@
+{
+  "c1": {
+    "pass": true,
+    "details": {
+      "exists": true,
+      "hidden": false,
+      "display": "flex",
+      "visible": true,
+      "hasPicker": true,
+      "hasAgora": true,
+      "agoraText": "Agora",
+      "hasBadge": true,
+      "pickerValue": "2026-06-17",
+      "pickerType": "date",
+      "rect": {
+        "x": 504,
+        "y": 731,
+        "w": 272,
+        "h": 45
+      }
+    }
+  },
+  "c2": {
+    "pass": true,
+    "afterChange": "2020-01-15",
+    "afterAgora": "2026-06-17"
+  },
+  "c3": {
+    "pass": false,
+    "changedCount": 0
+  },
+  "c4": {
+    "pass": true,
+    "badgeAppeared": true,
+    "at20221001": {
+      "hidden": true,
+      "text": "♂ Retrógrado",
+      "display": "none"
+    },
+    "at20221030": {
+      "hidden": false,
+      "display": "block"
+    },
+    "atToday": {
+      "hidden": true,
+      "display": "none"
+    }
+  },
+  "c5": {
+    "pass": true,
+    "hash": "#orbits=1&labels=1&speed=1&date=2020-01-15"
+  },
+  "c6": {
+    "pass": true,
+    "panelInFront": false,
+    "panelAfterBack": true,
+    "cardVisible": true
+  },
+  "c7": {
+    "pass": false,
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "realErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  "c8": {
+    "pass": true,
+    "details": {
+      "exists": true,
+      "hidden": false,
+      "display": "flex",
+      "visible": true,
+      "hasPicker": true,
+      "hasAgora": true,
+      "rect": {
+        "x": 94,
+        "y": 532,
+        "w": 188,
+        "h": 111
+      }
+    }
+  }
+}

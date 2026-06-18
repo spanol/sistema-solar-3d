@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-06-17T06:22:00.816Z",
+  "issue": "SIS-86",
+  "subject": "QA: anel de Saturno (SIS-85)",
+  "screenshots": [
+    "qa-sis86-01-top-view.png",
+    "qa-sis86-02-saturn-front.png",
+    "qa-sis86-03-saturn-ring-close.png",
+    "qa-sis86-04-topview-before-click.png",
+    "qa-sis86-05-after-click.png",
+    "qa-sis86-06-mobile-top.png",
+    "qa-sis86-07-mobile-saturn.png"
+  ],
+  "pass": [
+    "T1: Vista superior carregou (canvas presente)",
+    "T2: Card de fatos aparece após selecionar Saturno",
+    "T2: Card posicionado à esquerda do planeta ✓",
+    "T5: Mobile 375px — carregou sem crash"
+  ],
+  "fail": [
+    "T6: 1 outro(s) erro(s)/aviso(s) no console"
+  ],
+  "consoleErrors": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ],
+  "verdict": "FAIL"
+}

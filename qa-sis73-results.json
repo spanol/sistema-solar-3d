@@ -1,0 +1,99 @@
+{
+  "results": [
+    {
+      "test": "T1: Painel abre ao clicar em Qualidade",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T2: Painel fecha ao clicar novamente",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T3: Painel fecha ao clicar fora",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T4: Botão ½× fica ativo após clique",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T5: Botão ¾× fica ativo após clique",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T6: Botão 1× fica ativo após clique",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T7: Bloom inicializa como Ligado no desktop",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T8: Bloom toggle → Desligado",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T9: Bloom toggle → Ligado novamente",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T10: Estrelas → Poucas ativa o botão",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T11: Estrelas → Médio ativa o botão",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T12: Estrelas → Todas ativa o botão",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T13: Zero erros de console no desktop",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T14: Mobile preset — resolução baixa (≤ 0.75)",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T15: Mobile preset — Bloom desligado",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T16: Mobile preset — Estrelas em Poucas",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T17: Painel abre no mobile",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "test": "T18: Zero erros de console no mobile",
+      "status": "PASS",
+      "note": ""
+    }
+  ],
+  "consoleErrors": [],
+  "summary": {
+    "passed": 18,
+    "failed": 0
+  }
+}

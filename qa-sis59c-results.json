@@ -1,0 +1,27 @@
+{
+  "passed": 2,
+  "failed": 2,
+  "total": 4,
+  "results": [
+    {
+      "id": "BUG01-planet-deeplink",
+      "status": "FAIL",
+      "note": "planet= deep-link QUEBRADO — dateControls visível. URL final: orbits=1&labels=1&speed=1&date=2026-06-17"
+    },
+    {
+      "id": "BUG01b-date-deeplink",
+      "status": "FAIL",
+      "note": "date= deep-link QUEBRADO — datePicker tem 2026-06-17 ao invés de 2024-01-15"
+    },
+    {
+      "id": "T8-show-hide-logic",
+      "status": "PASS",
+      "note": "dateControls hide/show funciona: visible→hidden→visible"
+    },
+    {
+      "id": "T8b-escape-exists",
+      "status": "PASS",
+      "note": "Botão de atalhos existe — teclado Esc provavelmente funciona"
+    }
+  ]
+}

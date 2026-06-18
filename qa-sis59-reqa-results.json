@@ -1,0 +1,57 @@
+{
+  "passed": 10,
+  "failed": 0,
+  "total": 10,
+  "results": [
+    {
+      "id": "BUG01-planet-deeplink-FIXED",
+      "status": "PASS",
+      "note": "planet= deep-link RESTAURADO — dateControls oculto, URL mantém planet=. Hash: planet=earth&orbits=1&labels=1&speed=1&date=2026-06-17"
+    },
+    {
+      "id": "BUG01-console-clean",
+      "status": "PASS",
+      "note": "Zero erros de console no deep-link planet="
+    },
+    {
+      "id": "BUG01b-date-deeplink-FIXED",
+      "status": "PASS",
+      "note": "date= deep-link RESTAURADO — picker mostra 2024-12-15"
+    },
+    {
+      "id": "BUG01b-retrograde-restored",
+      "status": "PASS",
+      "note": "Badge retrógrado visível em 2024-12-15 após deep-link"
+    },
+    {
+      "id": "REG-date-panel-normal-load",
+      "status": "PASS",
+      "note": "Painel de data visível na carga normal (sem hash)"
+    },
+    {
+      "id": "REG-default-date",
+      "status": "PASS",
+      "note": "datePicker inicia com hoje: 2026-06-17"
+    },
+    {
+      "id": "REG-date-change-updates-hash",
+      "status": "PASS",
+      "note": "Mudar data via change ainda atualiza hash"
+    },
+    {
+      "id": "REG-retrograde-badge",
+      "status": "PASS",
+      "note": "Badge retrógrado ainda funciona em 2024-12-15"
+    },
+    {
+      "id": "REG-btn-hoje",
+      "status": "PASS",
+      "note": "Botão Agora ainda retorna para hoje"
+    },
+    {
+      "id": "REG-console-errors",
+      "status": "PASS",
+      "note": "Zero erros de console na sessão de regressão"
+    }
+  ]
+}

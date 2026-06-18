@@ -1,0 +1,87 @@
+{
+  "passed": 14,
+  "failed": 2,
+  "total": 16,
+  "results": [
+    {
+      "id": "T1-canvas",
+      "status": "PASS",
+      "note": "Canvas Three.js presente na vista superior"
+    },
+    {
+      "id": "T3-orbit-toggle-aria",
+      "status": "PASS",
+      "note": "Órbitas desativadas (aria-pressed=false)"
+    },
+    {
+      "id": "T3b-orbit-toggle-restore",
+      "status": "PASS",
+      "note": "Órbitas restauradas (orbit=0 ausente do hash)"
+    },
+    {
+      "id": "T4-canvas-content",
+      "status": "FAIL",
+      "note": "Canvas pode estar vazio (brilho centro: 0.0)"
+    },
+    {
+      "id": "T7-fps",
+      "status": "FAIL",
+      "note": "FPS crítico: 9 fps"
+    },
+    {
+      "id": "T8-console",
+      "status": "PASS",
+      "note": "Zero erros de console"
+    },
+    {
+      "id": "T9-mobile",
+      "status": "PASS",
+      "note": "Canvas presente em viewport mobile 390×844"
+    },
+    {
+      "id": "T9b-mobile-console",
+      "status": "PASS",
+      "note": "Zero erros de console no mobile"
+    },
+    {
+      "id": "T10-code-halley-def",
+      "status": "PASS",
+      "note": "Halley definido: a=59, e=0.967, inclRad=162° (retrógrado)"
+    },
+    {
+      "id": "T10-code-encke-def",
+      "status": "PASS",
+      "note": "Encke definido: a=7.4, e=0.847, inclRad=11.8°"
+    },
+    {
+      "id": "T10-code-kepler",
+      "status": "PASS",
+      "note": "Equação de Kepler resolvida por Newton-Raphson (8 iterações)"
+    },
+    {
+      "id": "T10-code-anti-sun",
+      "status": "PASS",
+      "note": "Vetor anti-Sol: ax=-wx/len, ay=-wy/len, az=-wz/len (cauda oposta ao Sol)"
+    },
+    {
+      "id": "T10-code-tail-growth",
+      "status": "PASS",
+      "note": "Crescimento da cauda: tailLength = clamp((a/r)*9, 0.5, 45) — maior ao se aproximar do periélio"
+    },
+    {
+      "id": "T10-code-orbit-toggle-click",
+      "status": "PASS",
+      "note": "Toggle de órbitas inclui cm.orbitGroup.visible=showOrbits no handler click"
+    },
+    {
+      "id": "T10-code-orbit-toggle-hash",
+      "status": "PASS",
+      "note": "Restore do hash também aplica cm.orbitGroup.visible=showOrbits"
+    },
+    {
+      "id": "T10-code-additive-blending",
+      "status": "PASS",
+      "note": "Cauda usa AdditiveBlending com 64 partículas sprite"
+    }
+  ]
+}

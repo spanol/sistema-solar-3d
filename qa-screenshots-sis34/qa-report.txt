@@ -1,0 +1,63 @@
+=== TEST 1: Initial Load – Top View ===
+T1 screenshot saved
+Canvas: {"found":true,"w":1280,"h":800,"ow":1280,"oh":800}
+Labels visible after 6s: Mercúrio, Vênus, Terra, Marte, Júpiter, Saturno, Urano, Netuno
+T1: PASS – all 8 planet labels visible
+Labels after pausing rotation: Mercúrio(591,402) | Vênus(696,464) | Terra(705,337) | Marte(598,288) | Júpiter(461,354) | Saturno(487,214) | Urano(655,99) | Netuno(913,153)
+
+=== Selecting: Mercúrio ===
+Clicking at (591, 392)
+  Planet: Mercúrio | Card left edge: 24px | On left: true
+
+=== Selecting: Vênus ===
+Clicking at (696, 454)
+  FAIL – card did not appear for Vênus
+
+=== Selecting: Terra ===
+Clicking at (705, 327)
+  FAIL – card did not appear for Terra
+
+=== Selecting: Marte ===
+Clicking at (598, 278)
+  FAIL – card did not appear for Marte
+
+=== Selecting: Júpiter ===
+Clicking at (461, 344)
+  Planet: Júpiter | Card left edge: 24px | On left: true
+
+=== Selecting: Saturno ===
+Clicking at (487, 204)
+  Planet: Saturno | Card left edge: 24px | On left: true
+
+=== Selecting: Urano ===
+Clicking at (655, 89)
+  Planet: Urano | Card left edge: 24px | On left: true
+
+=== Selecting: Netuno ===
+Clicking at (913, 143)
+  Planet: Netuno | Card left edge: 24px | On left: true
+
+=== Mobile Responsive (375px) ===
+Mobile canvas: {"w":375,"h":812}
+Mobile horizontal overflow: false
+Mobile: PASS
+
+=== Console Errors/Warnings ===
+JS Errors (0): 
+Warnings (40): WebGL: CONTEXT_LOST_WEBGL: loseContext: context lost | WebGL: INVALID_OPERATION: delete: object does not belong to this context | WebGL: INVALID_OPERATION: delete: object does not belong to this context
+Console: PASS
+
+=== SUMMARY ===
+Top view load: PASS
+Planet cards:
+  Mercúrio: PASS (card on LEFT ✓)
+  Vênus: FAIL – card not shown
+  Terra: FAIL – card not shown
+  Marte: FAIL – card not shown
+  Júpiter: PASS (card on LEFT ✓)
+  Saturno: PASS (card on LEFT ✓)
+  Urano: PASS (card on LEFT ✓)
+  Netuno: PASS (card on LEFT ✓)
+Mobile: PASS
+Console errors: PASS
+Overall: FAIL

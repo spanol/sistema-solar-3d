@@ -1,0 +1,109 @@
+{
+  "results": [
+    {
+      "test": "T1 Initial load",
+      "status": "PASS",
+      "detail": "Canvas present"
+    },
+    {
+      "test": "T2a ? button opens overlay",
+      "status": "PASS",
+      "detail": "Overlay visible=true"
+    },
+    {
+      "test": "T2b Overlay lists all shortcuts",
+      "status": "PASS",
+      "detail": "arrows=true nums=true esc=true space=true ?=true\n  overlayText: ATALHOS DE TECLADO||← →|Planeta anterior / próximo|1 – 8|Ir direto para o planeta|Esc|Voltar à vista superior|Espaço|Pau"
+    },
+    {
+      "test": "T2c ? key closes overlay",
+      "status": "PASS",
+      "detail": "Overlay hidden after ?=true"
+    },
+    {
+      "test": "T3a key 1 → Mercury (top view)",
+      "status": "PASS",
+      "detail": "hash=\"#planet=mercury&orbits=1&labels=1&speed=1\" cardHidden=false title=\"n/a\""
+    },
+    {
+      "test": "T3b key 8 → Neptune (top view)",
+      "status": "PASS",
+      "detail": "hash=\"#planet=neptune&orbits=1&labels=1&speed=1\" cardHidden=false title=\"n/a\""
+    },
+    {
+      "test": "T4a ArrowRight moves to next planet (Vênus)",
+      "status": "PASS",
+      "detail": "before=\"#planet=mercury&orbits=1&labels=1&speed=1\" after=\"#planet=venus&orbits=1&labels=1&speed=1\" title=\"undefined\""
+    },
+    {
+      "test": "T4b ArrowLeft returns to Mercury",
+      "status": "PASS",
+      "detail": "hash=\"#planet=mercury&orbits=1&labels=1&speed=1\" title=\"n/a\""
+    },
+    {
+      "test": "T4c ArrowRight ignored in top view",
+      "status": "PASS",
+      "detail": "hash unchanged=true (\"#orbits=1&labels=1&speed=1\" vs \"#orbits=1&labels=1&speed=1\")"
+    },
+    {
+      "test": "T5a Space pauses rotation",
+      "status": "PASS",
+      "detail": "before=\"▶ Rotação\"/pressed=true → after=\"⏸ Rotação\"/pressed=false"
+    },
+    {
+      "test": "T5b Space resumes rotation",
+      "status": "PASS",
+      "detail": "resumed=\"▶ Rotação\"/pressed=true"
+    },
+    {
+      "test": "T6a Esc closes overlay (stays in front view)",
+      "status": "PASS",
+      "detail": "overlayWasOpen=true overlayNowHidden=true cardStillVisible=true"
+    },
+    {
+      "test": "T6b Esc in front view → top view",
+      "status": "PASS",
+      "detail": "cardHidden=true hash=\"#orbits=1&labels=1&speed=1\""
+    },
+    {
+      "test": "T7 key 3 → Terra from front view",
+      "status": "PASS",
+      "detail": "before=\"#planet=mercury&orbits=1&labels=1&speed=1\" after=\"#planet=earth&orbits=1&labels=1&speed=1\" title=\"n/a\""
+    },
+    {
+      "test": "T8a ArrowLeft not captured in input",
+      "status": "PASS",
+      "detail": "hash unchanged=true (\"#planet=earth&orbits=1&labels=1&speed=1\" vs \"#planet=earth&orbits=1&labels=1&speed=1\")"
+    },
+    {
+      "test": "T8b Space not captured in input",
+      "status": "PASS",
+      "detail": "rotation unchanged=true (\"▶ Rotação\" vs \"▶ Rotação\")"
+    },
+    {
+      "test": "T9a ? key opens overlay",
+      "status": "PASS",
+      "detail": "overlayVisible=true"
+    },
+    {
+      "test": "T9b ? key closes overlay",
+      "status": "PASS",
+      "detail": "overlayHidden=true"
+    },
+    {
+      "test": "T10a Key 2 → Vênus regression",
+      "status": "PASS",
+      "detail": "cardVisible=true hash=\"#planet=venus&orbits=1&labels=1&speed=1\""
+    },
+    {
+      "test": "T10b Key 5 → Júpiter regression",
+      "status": "PASS",
+      "detail": "cardVisible=true hash=\"#planet=jupiter&orbits=1&labels=1&speed=1\""
+    }
+  ],
+  "consoleErrors": [],
+  "totalTests": 20,
+  "passed": 20,
+  "failed": 0,
+  "skipped": 0
+}

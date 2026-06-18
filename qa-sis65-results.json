@@ -1,0 +1,111 @@
+{
+  "summary": {
+    "passed": 18,
+    "failed": 0,
+    "warned": 0
+  },
+  "results": [
+    {
+      "id": "S1-planet",
+      "status": "PASS",
+      "note": "Mars card: \"Marte\""
+    },
+    {
+      "id": "S1-orbits",
+      "status": "PASS",
+      "note": "orbits hidden"
+    },
+    {
+      "id": "S1-labels",
+      "status": "PASS",
+      "note": "labels active"
+    },
+    {
+      "id": "S1-speed",
+      "status": "PASS",
+      "note": "rotation on (speed=2 > 0)"
+    },
+    {
+      "id": "S2",
+      "status": "PASS",
+      "note": "hash updated after canvas click: \"#planet=saturn&orbits=1&labels=1&speed=1\""
+    },
+    {
+      "id": "S3-orbits",
+      "status": "PASS",
+      "note": "orbits in hash: \"#orbits=0&labels=1&speed=1\""
+    },
+    {
+      "id": "S3-labels",
+      "status": "PASS",
+      "note": "labels in hash: \"#orbits=0&labels=0&speed=1\""
+    },
+    {
+      "id": "S3-speed",
+      "status": "PASS",
+      "note": "speed in hash: \"#orbits=0&labels=0&speed=0\""
+    },
+    {
+      "id": "S4-escape",
+      "status": "PASS",
+      "note": "planet= removed: \"#orbits=1&labels=1&speed=1\""
+    },
+    {
+      "id": "S4-close-btn",
+      "status": "PASS",
+      "note": "planet= removed via close button: \"#orbits=1&labels=1&speed=1\""
+    },
+    {
+      "id": "S5-planet",
+      "status": "PASS",
+      "note": "Saturn after reload: \"Saturno\""
+    },
+    {
+      "id": "S5-orbits",
+      "status": "PASS",
+      "note": "orbits hidden after reload"
+    },
+    {
+      "id": "S5-labels",
+      "status": "PASS",
+      "note": "labels hidden after reload"
+    },
+    {
+      "id": "S5-speed",
+      "status": "PASS",
+      "note": "rotation stopped after reload"
+    },
+    {
+      "id": "S6-next",
+      "status": "PASS",
+      "note": "hash changed after Next: \"#planet=mars&orbits=1&labels=1&speed=1\""
+    },
+    {
+      "id": "S6-prev",
+      "status": "PASS",
+      "note": "hash changed after Prev: \"#planet=earth&orbits=1&labels=1&speed=1\""
+    },
+    {
+      "id": "S7-errors",
+      "status": "PASS",
+      "note": "Zero console errors"
+    },
+    {
+      "id": "S7-mobile",
+      "status": "PASS",
+      "note": "Mobile: hash ok, card=\"Marte\""
+    }
+  ],
+  "consoleErrors": [],
+  "screenshots": [
+    "qa-sis65-S1-load.png",
+    "qa-sis65-S2-after-click.png",
+    "qa-sis65-S3-toggles.png",
+    "qa-sis65-S4-before-escape.png",
+    "qa-sis65-S4-after-escape.png",
+    "qa-sis65-S5-first-load.png",
+    "qa-sis65-S5-after-reload.png",
+    "qa-sis65-S6-arrows.png",
+    "qa-sis65-mobile.png"
+  ]
+}

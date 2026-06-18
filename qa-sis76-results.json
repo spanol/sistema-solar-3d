@@ -1,0 +1,90 @@
+{
+  "issue": "SIS-76",
+  "commit": "e4fd192",
+  "passed": 16,
+  "failed": 0,
+  "warned": 0,
+  "total": 16,
+  "results": [
+    {
+      "id": "T1-tour-btn-visible",
+      "status": "PASS",
+      "note": "Botão #btn-tour visível em #view-controls"
+    },
+    {
+      "id": "T2-overlay-opens",
+      "status": "PASS",
+      "note": "#tour-overlay visível após clicar Tour"
+    },
+    {
+      "id": "T3-caption-populated",
+      "status": "PASS",
+      "note": "Legenda: \"Mercúrio\" — Hint: \"O planeta mais próximo do Sol — um ano dura apenas…\""
+    },
+    {
+      "id": "T4-auto-advance",
+      "status": "PASS",
+      "note": "Auto-avançou: \"Mercúrio\" → \"Vênus\""
+    },
+    {
+      "id": "T5-play-pause-icon",
+      "status": "PASS",
+      "note": "Ícone Play/Pause alterou: \"▮▮\" → \"▶\""
+    },
+    {
+      "id": "T5b-pause-no-advance",
+      "status": "PASS",
+      "note": "Pausado em \"Terra\" — não avançou em 8s"
+    },
+    {
+      "id": "T6-resume-play",
+      "status": "PASS",
+      "note": "Play retomado — ícone=\"▮▮\""
+    },
+    {
+      "id": "T7-next-btn",
+      "status": "PASS",
+      "note": "Próximo avançou: \"Terra\" → \"Marte\""
+    },
+    {
+      "id": "T8-prev-btn",
+      "status": "PASS",
+      "note": "Anterior recuou: \"Marte\" → \"Terra\""
+    },
+    {
+      "id": "T9-exit-hides-overlay",
+      "status": "PASS",
+      "note": "Overlay oculto após clicar Sair"
+    },
+    {
+      "id": "T9b-controls-return",
+      "status": "PASS",
+      "note": "#view-controls visível após sair do tour"
+    },
+    {
+      "id": "T10-escape-closes-tour",
+      "status": "PASS",
+      "note": "Escape fechou o overlay do tour"
+    },
+    {
+      "id": "T11-mobile-responsive",
+      "status": "PASS",
+      "note": "Tour funcional em 375×667: \"Mercúrio\", controles visíveis"
+    },
+    {
+      "id": "T11b-mobile-caption-visible",
+      "status": "PASS",
+      "note": "Caption dentro da viewport mobile (bottom=555, width=375)"
+    },
+    {
+      "id": "T11c-mobile-console",
+      "status": "PASS",
+      "note": "Zero erros de console no mobile"
+    },
+    {
+      "id": "T12-console-errors",
+      "status": "PASS",
+      "note": "Zero erros de console na sessão desktop"
+    }
+  ]
+}

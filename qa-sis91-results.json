@@ -1,0 +1,11 @@
+{
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "errorCount": 1,
+  "screenshots": [
+    "qa-sis91-01-top-view.png",
+    "qa-sis91-02-zoomed-asteroid-belt.png",
+    "qa-sis91-03-asteroid-closeup.png"
+  ]
+}

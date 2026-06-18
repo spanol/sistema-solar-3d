@@ -1,0 +1,27 @@
+{
+  "screenshots": [
+    "qa-sis49-01-top-initial.png",
+    "qa-sis49-02-top-zoom-in.png",
+    "qa-sis49-03-top-zoom-out.png",
+    "qa-sis49-04-front-view.png",
+    "qa-sis49-05-front-zoom-in.png",
+    "qa-sis49-06-ctrl-wheel.png",
+    "qa-sis49-07-zoom-min.png",
+    "qa-sis49-08-zoom-max.png",
+    "qa-sis49-09-mobile-top.png"
+  ],
+  "consoleErrors": [
+    "[warning] [.WebGL-0x5fb4001bc200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[warning] [.WebGL-0x5fb4001bc200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[warning] [.WebGL-0x5fb4001bc200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[warning] [.WebGL-0x5fb4001bc200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+  ],
+  "findings": [
+    "Canvas size: 1366x768",
+    "After zoom-in — DPR: 1, scrollY: 0, outerW: 1366, innerW: 1366",
+    "Native browser zoom triggered: false",
+    "Planet card: {\"found\":true,\"visible\":true,\"left\":49,\"display\":\"block\"}",
+    "After Ctrl+wheel — DPR: 1, outerW: 1366, innerW: 1366"
+  ],
+  "mobileConsoleErrors": []
+}

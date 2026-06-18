@@ -1,0 +1,232 @@
+{
+  "timestamp": "2026-06-18T04:15:37.747Z",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": true,
+    "C5": true,
+    "C6": true,
+    "C7": true,
+    "allPass": true,
+    "score": "7/7"
+  },
+  "details": {
+    "c": {
+      "c1_date": true,
+      "c1_btn": true,
+      "c1_rtOff": true,
+      "c2_on_active": true,
+      "c2_on_aria": true,
+      "c2_on_hash": true,
+      "c2_off_active": true,
+      "c2_off_hash": true,
+      "c3_date": true,
+      "c3_rtOff": true,
+      "c3_nodrift": true,
+      "c4_active": true,
+      "c4_hash": true,
+      "c4_reload": true,
+      "c6_vis": true,
+      "c6_inview": true,
+      "c6_works": true,
+      "c7_rtOff": true,
+      "c7_date": true
+    },
+    "r": {
+      "t1": {
+        "date": "2026-06-18",
+        "rtActive": false,
+        "rtAria": "false",
+        "rtFound": true,
+        "badge": {
+          "visible": false,
+          "text": "♂ Retrógrado"
+        },
+        "hash": "",
+        "today": "2026-06-18"
+      },
+      "t2": {
+        "on": {
+          "date": "2026-06-18",
+          "rtActive": true,
+          "rtAria": "true",
+          "rtFound": true,
+          "badge": {
+            "visible": false,
+            "text": "♂ Retrógrado"
+          },
+          "hash": "#orbits=1&labels=1&speed=1&realtime=1&date=2026-06-18",
+          "today": "2026-06-18"
+        },
+        "interval": {
+          "date": "2026-06-18",
+          "rtActive": true,
+          "rtAria": "true",
+          "rtFound": true,
+          "badge": {
+            "visible": false,
+            "text": "♂ Retrógrado"
+          },
+          "hash": "#orbits=1&labels=1&speed=1&realtime=1&date=2026-06-18",
+          "today": "2026-06-18"
+        },
+        "off": {
+          "date": "2026-06-18",
+          "rtActive": false,
+          "rtAria": "false",
+          "rtFound": true,
+          "badge": {
+            "visible": false,
+            "text": "♂ Retrógrado"
+          },
+          "hash": "#orbits=1&labels=1&speed=1&date=2026-06-18",
+          "today": "2026-06-18"
+        },
+        "angles_before": []
+      },
+      "t3": {
+        "after_date": {
+          "date": "2024-12-15",
+          "rtActive": false,
+          "rtAria": "false",
+          "rtFound": true,
+          "badge": {
+            "visible": true,
+            "text": "♂ Retrógrado"
+          },
+          "hash": "#orbits=1&labels=1&speed=1&date=2024-12-15",
+          "today": "2026-06-18"
+        },
+        "no_drift": {
+          "date": "2024-12-15",
+          "rtActive": false,
+          "rtAria": "false",
+          "rtFound": true,
+          "badge": {
+            "visible": true,
+            "text": "♂ Retrógrado"
+          },
+          "hash": "#orbits=1&labels=1&speed=1&date=2024-12-15",
+          "today": "2026-06-18"
+        },
+        "alt_date": {
+          "date": "2022-11-01",
+          "rtActive": false,
+          "rtAria": "false",
+          "rtFound": true,
+          "badge": {
+            "visible": true,
+            "text": "♂ Retrógrado"
+          },
+          "hash": "#orbits=1&labels=1&speed=1&date=2022-11-01",
+          "today": "2026-06-18"
+        }
+      },
+      "t4": {
+        "initial": {
+          "date": "2026-06-18",
+          "rtActive": true,
+          "rtAria": "true",
+          "rtFound": true,
+          "badge": {
+            "visible": false,
+            "text": "♂ Retrógrado"
+          },
+          "hash": "#orbits=1&labels=1&speed=1&realtime=1&date=2026-06-18",
+          "today": "2026-06-18"
+        },
+        "after_reload": {
+          "date": "2026-06-18",
+          "rtActive": true,
+          "rtAria": "true",
+          "rtFound": true,
+          "badge": {
+            "visible": false,
+            "text": "♂ Retrógrado"
+          },
+          "hash": "#orbits=1&labels=1&speed=1&realtime=1&date=2026-06-18",
+          "today": "2026-06-18"
+        }
+      },
+      "t5": {
+        "btn": {
+          "found": true,
+          "text": "🛰 Tempo real",
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "top": 746,
+            "left": 170,
+            "w": 98,
+            "h": 34
+          }
+        },
+        "after_click": {
+          "date": "2026-06-18",
+          "rtActive": true,
+          "rtAria": "true",
+          "rtFound": true,
+          "badge": {
+            "visible": false,
+            "text": "♂ Retrógrado"
+          },
+          "hash": "#orbits=1&labels=1&speed=1&realtime=1&date=2026-06-18",
+          "today": "2026-06-18"
+        }
+      },
+      "t6": {
+        "before": {
+          "date": "2026-06-18",
+          "rtActive": true,
+          "rtAria": "true",
+          "rtFound": true,
+          "badge": {
+            "visible": false,
+            "text": "♂ Retrógrado"
+          },
+          "hash": "#orbits=1&labels=1&speed=1&realtime=1&date=2026-06-18",
+          "today": "2026-06-18"
+        },
+        "after": {
+          "date": "2026-06-18",
+          "rtActive": false,
+          "rtAria": "false",
+          "rtFound": true,
+          "badge": {
+            "visible": false,
+            "text": "♂ Retrógrado"
+          },
+          "hash": "#orbits=1&labels=1&speed=1&date=2026-06-18",
+          "today": "2026-06-18"
+        }
+      }
+    }
+  },
+  "consoleErrors": [
+    {
+      "t": 1,
+      "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "t": 2,
+      "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "t": 3,
+      "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "t": 4,
+      "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "t": 5,
+      "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "t": 6,
+      "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ]
+}

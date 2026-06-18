@@ -1,0 +1,149 @@
+{
+  "summary": {
+    "passed": 25,
+    "failed": 0,
+    "warned": 0
+  },
+  "results": [
+    {
+      "id": "S1-hash-update",
+      "status": "PASS",
+      "note": "hash contém planet= após clique: \"#planet=venus&orbits=1&labels=1&speed=1\""
+    },
+    {
+      "id": "S1-card-open",
+      "status": "PASS",
+      "note": "card abriu: \"Vênus\""
+    },
+    {
+      "id": "S2-planet",
+      "status": "PASS",
+      "note": "Mars restaurado: \"Marte\""
+    },
+    {
+      "id": "S2-orbits",
+      "status": "PASS",
+      "note": "órbitas ocultas conforme hash orbits=0"
+    },
+    {
+      "id": "S2-labels",
+      "status": "PASS",
+      "note": "labels ativos conforme hash labels=1"
+    },
+    {
+      "id": "S2-speed",
+      "status": "PASS",
+      "note": "rotação ativa conforme hash speed=2"
+    },
+    {
+      "id": "S3-btn-visible",
+      "status": "PASS",
+      "note": "botão \"Copiar link\" visível no card"
+    },
+    {
+      "id": "S3-feedback",
+      "status": "PASS",
+      "note": "texto mudou para \"✓ Copiado!\""
+    },
+    {
+      "id": "S3-clipboard",
+      "status": "PASS",
+      "note": "clipboard contém URL com hash: \"http://localhost:5173/#planet=mars&orbits=0&labels=1&speed=2\""
+    },
+    {
+      "id": "S3-reset",
+      "status": "PASS",
+      "note": "texto voltou para \"🔗 Copiar link\" após 2s"
+    },
+    {
+      "id": "S4-close-btn",
+      "status": "PASS",
+      "note": "planet= removido via \"← Voltar\": \"#orbits=1&labels=1&speed=1\""
+    },
+    {
+      "id": "S4-escape",
+      "status": "PASS",
+      "note": "planet= removido via Escape: \"#orbits=1&labels=1&speed=1\""
+    },
+    {
+      "id": "S5-orbits",
+      "status": "PASS",
+      "note": "orbits= presente no hash: \"#orbits=0&labels=1&speed=1\""
+    },
+    {
+      "id": "S5-labels",
+      "status": "PASS",
+      "note": "labels= presente no hash: \"#orbits=0&labels=0&speed=1\""
+    },
+    {
+      "id": "S5-speed",
+      "status": "PASS",
+      "note": "speed= presente no hash: \"#orbits=0&labels=0&speed=0\""
+    },
+    {
+      "id": "S6-planet",
+      "status": "PASS",
+      "note": "Saturn após reload: \"Saturno\""
+    },
+    {
+      "id": "S6-orbits",
+      "status": "PASS",
+      "note": "órbitas ocultas após reload"
+    },
+    {
+      "id": "S6-labels",
+      "status": "PASS",
+      "note": "labels ocultos após reload"
+    },
+    {
+      "id": "S6-speed",
+      "status": "PASS",
+      "note": "rotação parada após reload"
+    },
+    {
+      "id": "S7-state",
+      "status": "PASS",
+      "note": "Mobile: estado restaurado, card=\"Marte\""
+    },
+    {
+      "id": "S7-copy-btn",
+      "status": "PASS",
+      "note": "botão \"Copiar link\" visível no mobile"
+    },
+    {
+      "id": "S7-card-position",
+      "status": "PASS",
+      "note": "card posicionado na parte inferior (y=633)"
+    },
+    {
+      "id": "S8-errors",
+      "status": "PASS",
+      "note": "Zero erros de console"
+    },
+    {
+      "id": "REG-nav-next",
+      "status": "PASS",
+      "note": "hash mudou após Next: \"#planet=mars&orbits=1&labels=1&speed=1\""
+    },
+    {
+      "id": "REG-nav-prev",
+      "status": "PASS",
+      "note": "hash mudou após Prev: \"#planet=earth&orbits=1&labels=1&speed=1\""
+    }
+  ],
+  "consoleErrors": [],
+  "screenshots": [
+    "qa-sis69-S1-initial.png",
+    "qa-sis69-S1-after-click.png",
+    "qa-sis69-S2-restore.png",
+    "qa-sis69-S3-feedback.png",
+    "qa-sis69-S3-reset.png",
+    "qa-sis69-S4-before-close.png",
+    "qa-sis69-S4-before-escape.png",
+    "qa-sis69-S4-after-escape.png",
+    "qa-sis69-S5-toggles.png",
+    "qa-sis69-S6-first-load.png",
+    "qa-sis69-S6-after-reload.png",
+    "qa-sis69-S7-mobile.png"
+  ]
+}

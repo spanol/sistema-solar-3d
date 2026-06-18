@@ -1,0 +1,35 @@
+{
+  "passed": [
+    "Button #ctrl-real-scale exists in DOM",
+    "Button text \"⊖ Dist. Real\" contains \"Dist. Real\"",
+    "aria-pressed=\"false\" (OFF state) on initial load",
+    "Zero console errors on initial load",
+    "aria-pressed=\"true\" after activation",
+    "Button has \"active\" CSS class when real scale ON",
+    "URL hash contains \"realscale=1\": http://localhost:5173/#orbits=1&labels=1&speed=1&realscale=1",
+    "Zero console errors on toggle activation",
+    "aria-pressed=\"false\" after deactivation",
+    "URL no longer has \"realscale=1\" after deactivation",
+    "Zero console errors on toggle deactivation",
+    "Zero console errors on deep-link restore",
+    "Orbits toggle works with real scale ON",
+    "Labels toggle works with real scale ON",
+    "Zero console errors during toggles test",
+    "Dist. Real button visible on mobile viewport"
+  ],
+  "failed": [
+    {
+      "label": "Deep-link failed to restore state — aria-pressed=\"false\"",
+      "detail": ""
+    },
+    {
+      "label": "Deep-link: button missing \"active\" class",
+      "detail": ""
+    }
+  ],
+  "warnings": [
+    "No Earth/Terra label found — using screenshot fallback. Check label visibility in screenshot.",
+    "Could not enter front view — no planet labels found. Skipping front-view toggle test."
+  ],
+  "consoleErrors": []
+}

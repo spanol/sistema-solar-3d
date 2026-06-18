@@ -1,0 +1,17 @@
+{
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "resources404": [
+    "http://localhost:5177/favicon.ico"
+  ],
+  "errorCount": 1,
+  "screenshots": [
+    "qa-sis91-v2-01-top-view.png",
+    "qa-sis91-v2-02-belt-zoom1.png",
+    "qa-sis91-v2-03-belt-zoom2.png",
+    "qa-sis91-v2-04-belt-particles.png",
+    "qa-sis91-v2-05-jupiter-side.png",
+    "qa-sis91-v2-06-jupiter-closeup.png"
+  ]
+}
