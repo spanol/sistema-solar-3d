@@ -569,6 +569,9 @@ let hoveredPlanet = null;
 let showOrbits = true;
 let showLabels = true;
 let timeSpeed = 1;
+let realtimeMode = false;
+let positionFrozen = true;   // skip orbital drift; true by default so ephemeris holds
+let _realtimeInterval = null;
 let realScale      = false;
 let realScaleLerpT = 0;
 
@@ -655,6 +658,7 @@ function serializeHash() {
   parts.push(`labels=${showLabels ? 1 : 0}`);
   parts.push(`speed=${timeSpeed}`);
   if (realScale) parts.push('realscale=1');
+  if (realtimeMode) parts.push('realtime=1');
   const dp = document.getElementById('date-picker');
   if (dp && dp.value) parts.push(`date=${encodeURIComponent(dp.value)}`);
   return '#' + parts.join('&');
@@ -718,6 +722,10 @@ function restoreFromHash() {
       dp.value = params.date;
       applyDatePicker(params.date);
     }
+  }
+
+  if (params.realtime && params.realtime !== '0') {
+    setRealtimeMode(true);
   }
 }
 
@@ -936,6 +944,10 @@ btnLabels.addEventListener('click', () => {
 function toggleRotation() {
   timeSpeed = timeSpeed > 0 ? 0 : 1;
   const running = timeSpeed > 0;
+  if (running) {
+    if (realtimeMode) setRealtimeMode(false);
+    positionFrozen = false;
+  }
   btnRotation.classList.toggle('active', running);
   btnRotation.setAttribute('aria-pressed', running);
   btnRotation.textContent = running ? '▶ Rotação' : '⏸ Rotação';
@@ -964,6 +976,7 @@ btnRealScale.addEventListener('click', () => {
 const dateControls     = document.getElementById('date-controls');
 const datePicker       = document.getElementById('date-picker');
 const btnHoje          = document.getElementById('btn-hoje');
+const btnRealtime      = document.getElementById('btn-realtime');
 const retrogradeBadge  = document.getElementById('retrograde-badge');
 
 function todayStr() {
@@ -981,16 +994,44 @@ function applyDatePicker(dateStr, skipHash = false) {
   if (!skipHash) updateHash();
 }
 
+function setRealtimeMode(val) {
+  realtimeMode = val;
+  if (val) {
+    positionFrozen = true;
+    const now = new Date();
+    datePicker.value = now.toISOString().slice(0, 10);
+    applyDatePicker(datePicker.value);
+    clearInterval(_realtimeInterval);
+    _realtimeInterval = setInterval(() => {
+      const n = new Date();
+      datePicker.value = n.toISOString().slice(0, 10);
+      applyDatePicker(datePicker.value);
+    }, 2000);
+  } else {
+    clearInterval(_realtimeInterval);
+    _realtimeInterval = null;
+  }
+  btnRealtime.classList.toggle('active', val);
+  btnRealtime.setAttribute('aria-pressed', String(val));
+  updateHash();
+}
+
+btnRealtime.addEventListener('click', () => setRealtimeMode(!realtimeMode));
+
 const _initParams = parseHash();
 const initialDate = _initParams.date || todayStr();
 datePicker.value = initialDate;
 applyDatePicker(initialDate, true);
 
 datePicker.addEventListener('change', () => {
+  if (realtimeMode) setRealtimeMode(false);
+  positionFrozen = true;
   applyDatePicker(datePicker.value);
 });
 
 btnHoje.addEventListener('click', () => {
+  if (realtimeMode) setRealtimeMode(false);
+  positionFrozen = true;
   datePicker.value = todayStr();
   applyDatePicker(datePicker.value);
 });
@@ -1682,7 +1723,7 @@ const clock = new THREE.Clock();
   const orbitLerpK = Math.min(1, dt * 2.0);
   planets.forEach(p => {
     p.currentOrbitRadius = THREE.MathUtils.lerp(p.currentOrbitRadius, p.targetOrbitRadius, orbitLerpK);
-    p.angle += p.speed * dt * 60 * mult;
+    if (!positionFrozen) p.angle += p.speed * dt * 60 * mult;
     p.group.position.x = Math.cos(p.angle) * p.currentOrbitRadius;
     p.group.position.z = Math.sin(p.angle) * p.currentOrbitRadius;
     p.mesh.rotation.y += dt * 0.2;
