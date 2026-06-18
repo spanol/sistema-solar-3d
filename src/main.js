@@ -549,6 +549,32 @@ allMoons.forEach(m => {
   m.labelEl = el;
 });
 
+// -- Planet navigation strip (front view)
+const planetStrip = document.getElementById('planet-strip');
+const stripBtns = planets.map(p => {
+  const btn = document.createElement('button');
+  btn.className = 'planet-strip-btn';
+  btn.setAttribute('aria-label', p.data.name);
+  const dot = document.createElement('span');
+  dot.className = 'planet-strip-dot';
+  dot.style.background = p.data.color;
+  const name = document.createElement('span');
+  name.className = 'planet-strip-name';
+  name.textContent = p.data.name;
+  btn.append(dot, name);
+  btn.addEventListener('click', () => {
+    if (!cam.animating) selectPlanet(p);
+  });
+  planetStrip.appendChild(btn);
+  return btn;
+});
+
+function updatePlanetStrip(active) {
+  stripBtns.forEach((btn, i) => {
+    btn.classList.toggle('active', planets[i] === active);
+  });
+}
+
 // -- Hint
 const hint = document.createElement('div');
 hint.textContent = 'Clique ou toque em um planeta para explorar';
@@ -1194,6 +1220,7 @@ function startTour() {
   activePlanet = null;
   viewMode = 'front';
   viewControls.classList.add('hidden');
+  planetStrip.classList.add('hidden');
   qualityPanel.classList.add('hidden');
   tourOverlay.classList.remove('hidden');
   tourPlayPauseBtn.innerHTML = '&#9646;&#9646;';
@@ -1324,6 +1351,8 @@ function selectPlanet(p) {
   viewControls.classList.add('hidden');
   dateControls.classList.add('hidden');
   qualityPanel.classList.add('hidden');
+  planetStrip.classList.remove('hidden');
+  updatePlanetStrip(p);
 
   const { x, z } = p.group.position;
   const or = Math.sqrt(x * x + z * z) || p.data.orbitRadius;
@@ -1363,6 +1392,7 @@ function backToTop() {
   hint.style.opacity = '1';
   viewControls.classList.remove('hidden');
   dateControls.classList.remove('hidden');
+  planetStrip.classList.add('hidden');
 
   cam.tgtUp.set(0, 0, -1);
   moveCameraTo((realScale ? TOP_CAM_REAL : TOP_CAM_COMPRESSED).clone(), new THREE.Vector3(0, 0, 0));
@@ -1579,6 +1609,13 @@ function trySelect(cx, cy) {
     if (raycaster.intersectObject(sunMesh).length) {
       showCard(sunData);
     }
+  } else if (viewMode === 'front') {
+    const hits = raycaster.intersectObjects(clickTargets);
+    if (hits.length) {
+      const hitObj = hits[0].object;
+      const p = planets.find(q => q.mesh === hitObj || q.ringMesh === hitObj);
+      if (p && p !== activePlanet) { selectPlanet(p); return; }
+    }
   }
 }
 
@@ -1605,6 +1642,16 @@ canvas.addEventListener('mousemove', e => {
     } else {
       hoveredPlanet = null;
     }
+  } else if (viewMode === 'front') {
+    const hits = raycaster.intersectObjects(clickTargets);
+    if (hits.length) {
+      const hitObj = hits[0].object;
+      const p = planets.find(q => q.mesh === hitObj || q.ringMesh === hitObj);
+      canvas.style.cursor = (p && p !== activePlanet) ? 'pointer' : 'default';
+    } else {
+      canvas.style.cursor = 'default';
+    }
+    hoveredPlanet = null;
   } else {
     hoveredPlanet = null;
     canvas.style.cursor = 'default';

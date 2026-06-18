@@ -944,3 +944,89 @@ html, body {
     font-size: 0.82rem;
   }
 }
+
+/* ── Planet navigation strip (front view) ──────────────────────── */
+#planet-strip {
+  position: absolute;
+  bottom: 1.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.3rem;
+  z-index: 10;
+  max-width: calc(100vw - 2rem);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0.35rem 0.5rem;
+  background: rgba(5, 8, 18, 0.82);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: opacity 0.3s;
+}
+
+#planet-strip::-webkit-scrollbar {
+  display: none;
+}
+
+#planet-strip.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.planet-strip-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 0.32rem 0.45rem;
+  cursor: pointer;
+  min-width: 46px;
+  font-family: inherit;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.planet-strip-btn:hover:not(.active) {
+  background: rgba(79, 163, 224, 0.08);
+  border-color: rgba(79, 163, 224, 0.28);
+}
+
+.planet-strip-btn.active {
+  background: rgba(79, 163, 224, 0.15);
+  border-color: rgba(79, 163, 224, 0.48);
+  cursor: default;
+}
+
+.planet-strip-btn:focus-visible {
+  outline: 2px solid var(--card-accent);
+  outline-offset: 2px;
+}
+
+.planet-strip-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.planet-strip-name {
+  font-size: 0.65rem;
+  color: rgba(140, 190, 255, 0.65);
+  white-space: nowrap;
+  line-height: 1;
+  font-family: inherit;
+}
+
+.planet-strip-btn.active .planet-strip-name {
+  color: var(--card-text);
+}
+
+@media (max-width: 600px) {
+  #planet-strip {
+    display: none;
+  }
+}
