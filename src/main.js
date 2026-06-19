@@ -381,10 +381,14 @@ const comets = COMET_DEFS.map((def) => {
   middleGroup.add(innerGroup);
   scene.add(outerGroup);
 
+  const SUN_GAP = 7; // exclusion radius around the Sun (scene units); perihelion falls inside this for all 4 comets
   const orbitPts = [];
   for (let i = 0; i <= 256; i++) {
     const theta = (i / 256) * Math.PI * 2;
-    orbitPts.push(new THREE.Vector3(a * Math.cos(theta) - cfoc, 0, b * Math.sin(theta)));
+    const x = a * Math.cos(theta) - cfoc;
+    const z = b * Math.sin(theta);
+    if (Math.hypot(x, z) < SUN_GAP) continue; // skip arc inside Sun disk / corona
+    orbitPts.push(new THREE.Vector3(x, 0, z));
   }
   const orbitLine = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints(orbitPts),
