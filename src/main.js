@@ -196,41 +196,41 @@ scene.add(galaxyGroup);
     return new THREE.CanvasTexture(c);
   }
 
+  // Positions chosen to be visible from the default top-down camera (Y=130 looking at origin).
+  // Camera forward ≈ (0, -0.967, -0.238); visible condition: 0.967*y + 0.238*z < 133.
   const GALAXY_DEFS = [
-    { // Andromeda-like — blue-white spiral
-      pos: new THREE.Vector3(1, 0.35, -0.3).normalize().multiplyScalar(970),
-      rotX: 0.7, rotY: 0.2, scale: 38,
+    { // Blue-white spiral — left, mid-height
+      pos: new THREE.Vector3(-405, -913, -51).normalize().multiplyScalar(970),
+      scale: 110,
       tex: makeGalaxyTex('rgba(140,170,255,0.90)', 'rgba(60,80,200,0.50)', 2),
     },
-    { // Magenta elliptical
-      pos: new THREE.Vector3(-0.8, 0.2, 0.55).normalize().multiplyScalar(1020),
-      rotX: 0.3, rotY: 1.1, scale: 28,
+    { // Magenta elliptical — right, mid-height
+      pos: new THREE.Vector3(460, -884, 102).normalize().multiplyScalar(1010),
+      scale: 90,
       tex: makeGalaxyTex('rgba(220,120,255,0.85)', 'rgba(130,30,180,0.45)', 0),
     },
-    { // Amber/gold spiral — Milky Way neighbor
-      pos: new THREE.Vector3(0.4, -0.4, 0.85).normalize().multiplyScalar(990),
-      rotX: 1.2, rotY: 0.5, scale: 32,
+    { // Amber/gold spiral — upper-left
+      pos: new THREE.Vector3(-291, -874, -388).normalize().multiplyScalar(980),
+      scale: 105,
       tex: makeGalaxyTex('rgba(255,210,100,0.88)', 'rgba(180,90,20,0.45)', 3),
     },
-    { // Cyan barred spiral
-      pos: new THREE.Vector3(-0.3, 0.6, -0.75).normalize().multiplyScalar(1050),
-      rotX: 0.5, rotY: 2.2, scale: 24,
+    { // Cyan barred spiral — lower center-right
+      pos: new THREE.Vector3(99, -994, 50).normalize().multiplyScalar(990),
+      scale: 80,
       tex: makeGalaxyTex('rgba(80,230,220,0.82)', 'rgba(20,110,130,0.42)', 2),
     },
   ];
 
-  GALAXY_DEFS.forEach(({ pos, rotX, rotY, scale, tex }) => {
-    const mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(scale, scale * 0.6),
-      new THREE.MeshBasicMaterial({
+  GALAXY_DEFS.forEach(({ pos, scale, tex }) => {
+    const sprite = new THREE.Sprite(
+      new THREE.SpriteMaterial({
         map: tex, transparent: true, depthWrite: false,
-        blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
       })
     );
-    mesh.position.copy(pos);
-    mesh.rotation.x = rotX;
-    mesh.rotation.y = rotY;
-    galaxyGroup.add(mesh);
+    sprite.position.copy(pos);
+    sprite.scale.set(scale, scale * 0.6, 1);
+    galaxyGroup.add(sprite);
   });
 })();
 
@@ -835,6 +835,7 @@ function restoreFromHash() {
     btnOrbits.setAttribute('aria-pressed', String(showOrbits));
     planets.forEach(p => { p.orbitMesh.visible = showOrbits; });
     comets.forEach(cm => { cm.orbitLine.visible = showOrbits; });
+    syncVisBtn(document.getElementById('vis-orbits'), showOrbits);
   }
 
   if ('labels' in params) {
@@ -846,16 +847,19 @@ function restoreFromHash() {
   if ('comets' in params) {
     showComets = params.comets !== '0';
     applyShowComets(showComets);
+    syncVisBtn(document.getElementById('vis-comets'), showComets);
   }
 
   if ('galaxies' in params) {
     showGalaxies = params.galaxies !== '0';
     galaxyGroup.visible = showGalaxies;
+    syncVisBtn(document.getElementById('vis-galaxies'), showGalaxies);
   }
 
   if ('stars' in params) {
     showStars = params.stars !== '0';
     applyStarDensity(starDensity);
+    syncVisBtn(document.getElementById('vis-stars'), showStars);
   }
 
   if ('speed' in params) {
