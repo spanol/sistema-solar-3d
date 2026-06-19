@@ -3,6 +3,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import allBodies from './data/planets.json';
 import * as Astronomy from 'astronomy-engine';
 
@@ -39,6 +40,15 @@ const cam = {
 camera.position.copy(cam.pos);
 camera.up.copy(cam.up);
 camera.lookAt(cam.lookAt);
+
+// -- OrbitControls (Freecam mode — disabled outside freecam)
+const orbitControls = new OrbitControls(camera, canvas);
+orbitControls.enabled = false;
+orbitControls.enableDamping = true;
+orbitControls.dampingFactor = 0.07;
+orbitControls.screenSpacePanning = true;
+orbitControls.minDistance = 5;
+orbitControls.maxDistance = 1500;
 
 // -- Lights
 scene.add(new THREE.AmbientLight(0x111133, 2.0));
@@ -228,15 +238,25 @@ asteroidBeltReal.material.opacity = 0;
 scene.add(asteroidBeltCompressed);
 scene.add(asteroidBeltReal);
 
-// -- Comets (Halley + Encke) — eccentric orbits, anti-sun tail
+// -- Comets — eccentric orbits, anti-sun tail
+// Omega = longitude of ascending node, argPeri = argument of perihelion (radians)
 const COMET_DEFS = [
-  { name: 'Halley', a: 59,  e: 0.967, periodS: 7400, inclRad: Math.PI * 162 / 180, M0: 0.0 },
-  { name: 'Encke',  a:  7.4, e: 0.847, periodS: 330,  inclRad: Math.PI * 11.8 / 180, M0: Math.PI },
+  { name: 'Halley',    a:  59,  e: 0.967, periodS:  7400, inclRad: Math.PI * 162.0 / 180, Omega: 0.80, argPeri: 1.93, M0: 0.0,    tailScale: 1.00 },
+  { name: 'Encke',    a:   7.4, e: 0.847, periodS:   330, inclRad: Math.PI *  11.8 / 180, Omega: 2.42, argPeri: 0.61, M0: Math.PI, tailScale: 0.65 },
+  { name: 'Hale-Bopp',a: 100,  e: 0.995, periodS: 18600, inclRad: Math.PI *  89.4 / 180, Omega: 1.10, argPeri: 3.05, M0: 2.10,   tailScale: 1.40 },
+  { name: 'Ikeya',   a:   28,  e: 0.921, periodS:  3100, inclRad: Math.PI *  51.7 / 180, Omega: 4.25, argPeri: 2.60, M0: 1.50,   tailScale: 0.80 },
 ];
 
 function solveKepler(M, e) {
-  let E = M % (Math.PI * 2);
-  for (let i = 0; i < 8; i++) E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+  // Normalize M to [0, 2π) — prevents precision loss when elapsed is large
+  M = M - Math.PI * 2 * Math.floor(M / (Math.PI * 2));
+  // Danby initial guess: stable for high eccentricity (e.g. Halley e=0.967)
+  let E = M + 0.85 * e * (Math.sin(M) >= 0 ? 1 : -1);
+  for (let i = 0; i < 30; i++) {
+    const dE = (M - E + e * Math.sin(E)) / (1 - e * Math.cos(E));
+    E += dE;
+    if (Math.abs(dE) < 1e-8) break;
+  }
   return E;
 }
 
@@ -255,14 +275,22 @@ const cometSpriteTex = (() => {
 
 const TAIL_N = 64;
 
+// Reused temp vector — avoids per-frame allocation in updateComets
+const _cometWPos = new THREE.Vector3();
+
 const comets = COMET_DEFS.map((def) => {
-  const { a, e, inclRad, M0 } = def;
+  const { a, e, inclRad, Omega, argPeri, M0 } = def;
   const b = a * Math.sqrt(1 - e * e);
   const cfoc = a * e;
 
-  const orbitGroup = new THREE.Group();
-  orbitGroup.rotation.x = inclRad;
-  scene.add(orbitGroup);
+  // Three nested groups are the single source of truth for orbital orientation:
+  // innerGroup (argPeri, Y) → middleGroup (inclination, X) → outerGroup (Omega, Y)
+  const outerGroup  = new THREE.Group(); outerGroup.rotation.y  = Omega;
+  const middleGroup = new THREE.Group(); middleGroup.rotation.x = inclRad;
+  const innerGroup  = new THREE.Group(); innerGroup.rotation.y  = argPeri;
+  outerGroup.add(middleGroup);
+  middleGroup.add(innerGroup);
+  scene.add(outerGroup);
 
   const orbitPts = [];
   for (let i = 0; i <= 256; i++) {
@@ -273,13 +301,14 @@ const comets = COMET_DEFS.map((def) => {
     new THREE.BufferGeometry().setFromPoints(orbitPts),
     new THREE.LineBasicMaterial({ color: 0x1a2e4a, transparent: true, opacity: 0.35 })
   );
-  orbitGroup.add(orbitLine);
+  innerGroup.add(orbitLine);
 
+  // Nucleus inside innerGroup — its local (x,0,z) maps onto the orbit ellipse above exactly.
   const nucleus = new THREE.Mesh(
     new THREE.SphereGeometry(0.28, 8, 8),
     new THREE.MeshStandardMaterial({ color: 0xbbddff, emissive: 0x88bbff, emissiveIntensity: 2.5, roughness: 0.3 })
   );
-  scene.add(nucleus);
+  innerGroup.add(nucleus);
 
   const tailPos = new Float32Array(TAIL_N * 3);
   const tailRandA = new Float32Array(TAIL_N);
@@ -301,39 +330,38 @@ const comets = COMET_DEFS.map((def) => {
   }));
   scene.add(tailPts);
 
-  return { def, a, e, b, cfoc, inclRad, M0, nucleus, tailPts, tailPos, tailGeo, tailRandA, tailRandS, orbitGroup };
+  return { def, a, e, b, cfoc, M0, nucleus, tailPts, tailPos, tailGeo, tailRandA, tailRandS, orbitLine, outerGroup };
 });
 
 function updateComets(elapsed) {
   comets.forEach(cm => {
-    const { def, a, e, inclRad, M0, nucleus, tailPts, tailPos, tailGeo, tailRandA, tailRandS } = cm;
+    const { def, a, e, M0, nucleus, tailPts, tailPos, tailGeo, tailRandA, tailRandS } = cm;
     const M = M0 + (elapsed / def.periodS) * Math.PI * 2;
     const E = solveKepler(M, e);
     const sinHalf = Math.sin(E / 2);
     const cosHalf = Math.cos(E / 2);
     const v = 2 * Math.atan2(Math.sqrt(1 + e) * sinHalf, Math.sqrt(1 - e) * cosHalf);
     const r = a * (1 - e * Math.cos(E));
-    const xOrb = r * Math.cos(v);
-    const zOrb = r * Math.sin(v);
 
-    const cosI = Math.cos(inclRad);
-    const sinI = Math.sin(inclRad);
-    const wx = xOrb;
-    const wy = -zOrb * sinI;
-    const wz =  zOrb * cosI;
-    nucleus.position.set(wx, wy, wz);
+    // Set nucleus in innerGroup local space (orbital plane, perihelion along +X)
+    nucleus.position.set(r * Math.cos(v), 0, r * Math.sin(v));
+
+    // Derive world position after group transforms for tail/anti-sun computation
+    nucleus.updateWorldMatrix(true, false);
+    nucleus.getWorldPosition(_cometWPos);
+    const wx = _cometWPos.x, wy = _cometWPos.y, wz = _cometWPos.z;
 
     // anti-sun direction (away from origin)
     const len = Math.sqrt(wx * wx + wy * wy + wz * wz) || 1;
     const ax = -wx / len, ay = -wy / len, az = -wz / len;
 
-    // tail grows closer to perihelion (small r)
-    const tailLength = THREE.MathUtils.clamp((a / r) * 9, 0.5, 45);
+    // tail grows closer to perihelion (small r), scaled per comet
+    const tailLength = THREE.MathUtils.clamp((a / r) * 9 * def.tailScale, 0.5, 60);
     const opacity    = THREE.MathUtils.clamp(1.1 - r / (a * 0.7), 0.05, 0.85);
     tailPts.material.opacity = opacity;
 
-    // perpendicular vector for dust spread
-    const perpX = -az, perpZ = ax;  // perpendicular in XZ plane
+    // perpendicular spread vector in XZ plane
+    const perpX = -az, perpZ = ax;
 
     for (let i = 0; i < TAIL_N; i++) {
       const t = i / TAIL_N;
@@ -345,7 +373,7 @@ function updateComets(elapsed) {
       tailPos[i * 3 + 2] = wz + az * dist + sa * spread * perpZ;
     }
     tailGeo.attributes.position.needsUpdate = true;
-    cm.orbitGroup.visible = showOrbits;
+    cm.orbitLine.visible = showOrbits;
   });
 }
 
@@ -703,7 +731,7 @@ function restoreFromHash() {
     btnOrbits.classList.toggle('active', showOrbits);
     btnOrbits.setAttribute('aria-pressed', String(showOrbits));
     planets.forEach(p => { p.orbitMesh.visible = showOrbits; });
-    comets.forEach(cm => { cm.orbitGroup.visible = showOrbits; });
+    comets.forEach(cm => { cm.orbitLine.visible = showOrbits; });
   }
 
   if ('labels' in params) {
@@ -956,7 +984,7 @@ btnOrbits.addEventListener('click', () => {
   btnOrbits.classList.toggle('active', showOrbits);
   btnOrbits.setAttribute('aria-pressed', showOrbits);
   planets.forEach(p => { p.orbitMesh.visible = showOrbits; });
-  comets.forEach(cm => { cm.orbitGroup.visible = showOrbits; });
+  comets.forEach(cm => { cm.orbitLine.visible = showOrbits; });
   updateHash();
 });
 
@@ -1398,6 +1426,51 @@ function backToTop() {
   moveCameraTo((realScale ? TOP_CAM_REAL : TOP_CAM_COMPRESSED).clone(), new THREE.Vector3(0, 0, 0));
 }
 
+// -- Freecam mode
+const btnFreecam = document.getElementById('btn-freecam');
+
+function enterFreecam() {
+  if (viewMode === 'freecam') return;
+  if (tourMode) stopTour();
+  if (viewMode === 'front') {
+    hideCard();
+    stopPlanetTone();
+    activePlanet = null;
+    planetStrip.classList.add('hidden');
+  }
+  viewMode = 'freecam';
+  hint.style.opacity = '0';
+  viewControls.classList.remove('hidden');
+  dateControls.classList.remove('hidden');
+  qualityPanel.classList.add('hidden');
+
+  // Sync OrbitControls to current camera state before enabling
+  orbitControls.target.copy(cam.lookAt);
+  orbitControls.update();
+  orbitControls.enabled = true;
+
+  btnFreecam.classList.add('active');
+  btnFreecam.setAttribute('aria-pressed', 'true');
+}
+
+function exitFreecam() {
+  if (viewMode !== 'freecam') return;
+  orbitControls.enabled = false;
+  // Pull current camera position back into cam so backToTop lerps from where we are
+  cam.pos.copy(camera.position);
+  cam.lookAt.copy(orbitControls.target);
+  backToTop();
+  btnFreecam.classList.remove('active');
+  btnFreecam.setAttribute('aria-pressed', 'false');
+}
+
+function toggleFreecam() {
+  if (viewMode === 'freecam') exitFreecam();
+  else enterFreecam();
+}
+
+btnFreecam.addEventListener('click', toggleFreecam);
+
 // -- Sequential navigation
 function navigatePlanet(dir) {
   if (cam.animating || !activePlanet) return;
@@ -1568,6 +1641,11 @@ document.addEventListener('keydown', e => {
       if (!shortcutsOverlay.classList.contains('hidden')) toggleShortcuts();
       else if (tourMode) stopTour();
       else if (viewMode === 'front') backToTop();
+      else if (viewMode === 'freecam') exitFreecam();
+      break;
+    case 'f':
+    case 'F':
+      toggleFreecam();
       break;
     case ' ':
       e.preventDefault();
@@ -1686,9 +1764,10 @@ function applyZoom(deltaY) {
 }
 
 // Wheel over the canvas zooms the scene instead of scrolling/zooming the page.
+// In freecam mode OrbitControls owns the wheel event — skip applyZoom to avoid double-zoom.
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
-  applyZoom(e.deltaY);
+  if (viewMode !== 'freecam') applyZoom(e.deltaY);
 }, { passive: false });
 
 // Pinch-to-zoom on touch devices.
@@ -1708,7 +1787,8 @@ canvas.addEventListener('touchmove', e => {
   if (e.touches.length === 2) {
     e.preventDefault();
     const d = touchDist(e.touches);
-    if (pinch.dist > 0) applyZoom((pinch.dist - d) * 1.4);
+    // In freecam mode OrbitControls handles touch — skip manual pinch zoom.
+    if (pinch.dist > 0 && viewMode !== 'freecam') applyZoom((pinch.dist - d) * 1.4);
     pinch.dist = d;
   }
 }, { passive: false });
@@ -1809,6 +1889,8 @@ const clock = new THREE.Clock();
 
   if (tourMode) {
     tickTourCamera(dt);
+  } else if (viewMode === 'freecam') {
+    orbitControls.update();
   } else if (cam.animating) {
     tickCamera(dt);
   } else if (viewMode === 'front' && activePlanet) {
