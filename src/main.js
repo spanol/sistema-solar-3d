@@ -1645,7 +1645,7 @@ document.addEventListener('keydown', e => {
       break;
     case 'f':
     case 'F':
-      toggleFreecam();
+      if (!e.ctrlKey && !e.metaKey && !e.altKey) toggleFreecam();
       break;
     case ' ':
       e.preventDefault();
