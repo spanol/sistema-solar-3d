@@ -59,7 +59,7 @@ scene.add(sunLight);
 const fillLight = new THREE.PointLight(0xfff8f0, 0, 0, 0);
 scene.add(fillLight);
 
-// -- Space background: dark navy with galactic band + nebula patches
+// -- Space background: dark with galactic band + colorful nebula patches
 (function makeSpaceBackground() {
   const W = 2048, H = 1024;
   const bgCanvas = document.createElement('canvas');
@@ -71,8 +71,8 @@ scene.add(fillLight);
 
   // Galactic band — two overlapping horizontal gradients
   [
-    { spread: 0.28, alpha: 0.20, rgb: [18, 10, 42] },
-    { spread: 0.12, alpha: 0.14, rgb: [30, 18, 60] },
+    { spread: 0.28, alpha: 0.22, rgb: [22, 10, 55] },
+    { spread: 0.12, alpha: 0.18, rgb: [40, 18, 80] },
   ].forEach(({ spread, alpha, rgb }) => {
     const g = ctx.createLinearGradient(0, H * (0.5 - spread), 0, H * (0.5 + spread));
     g.addColorStop(0,   'rgba(0,0,0,0)');
@@ -82,11 +82,14 @@ scene.add(fillLight);
     ctx.fillRect(0, 0, W, H);
   });
 
-  // Subtle nebula patches
+  // Colorful nebula patches — magenta, cyan, amber
   [
-    [0.18, 0.42, 140, 'rgba(25,8,55,0.11)'],
-    [0.68, 0.58, 110, 'rgba(8,22,50,0.09)'],
-    [0.44, 0.35, 160, 'rgba(12,6,38,0.08)'],
+    [0.18, 0.42, 180, 'rgba(90,15,120,0.18)'],
+    [0.68, 0.58, 150, 'rgba(8,60,110,0.16)'],
+    [0.44, 0.35, 210, 'rgba(20,8,60,0.12)'],
+    [0.82, 0.30, 120, 'rgba(100,45,10,0.14)'],
+    [0.30, 0.68, 130, 'rgba(10,80,90,0.13)'],
+    [0.56, 0.70, 100, 'rgba(70,10,100,0.12)'],
   ].forEach(([fx, fy, r, c]) => {
     const grd = ctx.createRadialGradient(fx*W, fy*H, 0, fx*W, fy*H, r);
     grd.addColorStop(0, c);
@@ -135,15 +138,101 @@ function makeStars(count, minR, maxR, size, color) {
   }));
 }
 
-// Star layers on shell 900–1200 — white, blue-white, warm yellow
+// Star layers on shell 900–1200 — white, blue-white, warm yellow, magenta, cyan
 const starGroups = [
   makeStars(4000, 900, 1200, 0.48, 0xffffff),
   makeStars(1200, 900, 1200, 0.30, 0xffffff),
   makeStars(600,  900, 1200, 0.78, 0xc8dcff),
   makeStars(280,  900, 1200, 0.62, 0xfff5cc),
   makeStars(100,  900, 1200, 1.10, 0xffcc88),
+  makeStars(80,   900, 1200, 0.90, 0xff88cc),
+  makeStars(60,   900, 1200, 0.85, 0x88ffee),
 ];
 starGroups.forEach(g => scene.add(g));
+
+// -- Galaxies — 4 procedural spiral/elliptical sprites at shell distance ~950–1100
+const galaxyGroup = new THREE.Group();
+scene.add(galaxyGroup);
+
+(function makeGalaxies() {
+  function makeGalaxyTex(colorInner, colorOuter, arms, width, height) {
+    const c = document.createElement('canvas');
+    c.width = width || 256; c.height = height || 256;
+    const ctx = c.getContext('2d');
+    const cx = c.width / 2, cy = c.height / 2;
+
+    // Core glow
+    const coreG = ctx.createRadialGradient(cx, cy, 0, cx, cy, cx * 0.25);
+    coreG.addColorStop(0, colorInner);
+    coreG.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = coreG;
+    ctx.fillRect(0, 0, c.width, c.height);
+
+    // Disk / arms
+    const diskG = ctx.createRadialGradient(cx, cy, 0, cx, cy, cx * 0.85);
+    diskG.addColorStop(0,   colorInner.replace(/[\d.]+\)$/, '0.35)'));
+    diskG.addColorStop(0.4, colorOuter.replace(/[\d.]+\)$/, '0.20)'));
+    diskG.addColorStop(1,   'rgba(0,0,0,0)');
+
+    if (arms > 0) {
+      // Spiral arms via rotated ellipses
+      for (let i = 0; i < arms; i++) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate((Math.PI * 2 / arms) * i);
+        ctx.scale(1, 0.25);
+        const ag = ctx.createRadialGradient(cx * 0.3, 0, 0, cx * 0.3, 0, cx * 0.65);
+        ag.addColorStop(0,   colorOuter.replace(/[\d.]+\)$/, '0.22)'));
+        ag.addColorStop(1,   'rgba(0,0,0,0)');
+        ctx.fillStyle = ag;
+        ctx.fillRect(-cx, -cx, c.width * 2, c.height * 2);
+        ctx.restore();
+      }
+    } else {
+      ctx.fillStyle = diskG;
+      ctx.fillRect(0, 0, c.width, c.height);
+    }
+
+    return new THREE.CanvasTexture(c);
+  }
+
+  const GALAXY_DEFS = [
+    { // Andromeda-like — blue-white spiral
+      pos: new THREE.Vector3(1, 0.35, -0.3).normalize().multiplyScalar(970),
+      rotX: 0.7, rotY: 0.2, scale: 38,
+      tex: makeGalaxyTex('rgba(140,170,255,0.90)', 'rgba(60,80,200,0.50)', 2),
+    },
+    { // Magenta elliptical
+      pos: new THREE.Vector3(-0.8, 0.2, 0.55).normalize().multiplyScalar(1020),
+      rotX: 0.3, rotY: 1.1, scale: 28,
+      tex: makeGalaxyTex('rgba(220,120,255,0.85)', 'rgba(130,30,180,0.45)', 0),
+    },
+    { // Amber/gold spiral — Milky Way neighbor
+      pos: new THREE.Vector3(0.4, -0.4, 0.85).normalize().multiplyScalar(990),
+      rotX: 1.2, rotY: 0.5, scale: 32,
+      tex: makeGalaxyTex('rgba(255,210,100,0.88)', 'rgba(180,90,20,0.45)', 3),
+    },
+    { // Cyan barred spiral
+      pos: new THREE.Vector3(-0.3, 0.6, -0.75).normalize().multiplyScalar(1050),
+      rotX: 0.5, rotY: 2.2, scale: 24,
+      tex: makeGalaxyTex('rgba(80,230,220,0.82)', 'rgba(20,110,130,0.42)', 2),
+    },
+  ];
+
+  GALAXY_DEFS.forEach(({ pos, rotX, rotY, scale, tex }) => {
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(scale, scale * 0.6),
+      new THREE.MeshBasicMaterial({
+        map: tex, transparent: true, depthWrite: false,
+        blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      })
+    );
+    mesh.position.copy(pos);
+    mesh.rotation.x = rotX;
+    mesh.rotation.y = rotY;
+    galaxyGroup.add(mesh);
+  });
+})();
 
 // -- Texture loader
 const textureLoader = new THREE.TextureLoader();
@@ -622,6 +711,9 @@ let activePlanet = null;
 let hoveredPlanet = null;
 let showOrbits = true;
 let showLabels = true;
+let showComets = true;
+let showGalaxies = true;
+let showStars = true;
 let timeSpeed = 1;
 let realtimeMode = false;
 let positionFrozen = true;   // skip orbital drift; true by default so ephemeris holds
@@ -642,7 +734,15 @@ function applyQualityPixelRatio(scale) {
   composer.setSize(window.innerWidth, window.innerHeight);
 }
 
+function applyShowComets(show) {
+  comets.forEach(cm => {
+    cm.outerGroup.visible = show;
+    cm.tailPts.visible    = show;
+  });
+}
+
 function applyStarDensity(density) {
+  if (!showStars) { starGroups.forEach(g => { g.visible = false; }); return; }
   if (density === 'low') {
     starGroups.forEach((g, i) => { g.visible = i === 0; });
   } else if (density === 'medium') {
@@ -710,6 +810,9 @@ function serializeHash() {
   if (activePlanet) parts.push(`planet=${activePlanet.data.id}`);
   parts.push(`orbits=${showOrbits ? 1 : 0}`);
   parts.push(`labels=${showLabels ? 1 : 0}`);
+  if (!showComets)   parts.push('comets=0');
+  if (!showGalaxies) parts.push('galaxies=0');
+  if (!showStars)    parts.push('stars=0');
   parts.push(`speed=${timeSpeed}`);
   if (realScale) parts.push('realscale=1');
   if (realtimeMode) parts.push('realtime=1');
@@ -738,6 +841,21 @@ function restoreFromHash() {
     showLabels = params.labels !== '0';
     btnLabels.classList.toggle('active', showLabels);
     btnLabels.setAttribute('aria-pressed', String(showLabels));
+  }
+
+  if ('comets' in params) {
+    showComets = params.comets !== '0';
+    applyShowComets(showComets);
+  }
+
+  if ('galaxies' in params) {
+    showGalaxies = params.galaxies !== '0';
+    galaxyGroup.visible = showGalaxies;
+  }
+
+  if ('stars' in params) {
+    showStars = params.stars !== '0';
+    applyStarDensity(starDensity);
   }
 
   if ('speed' in params) {
@@ -1141,6 +1259,72 @@ document.querySelectorAll('#quality-stars [data-val]').forEach(btn => {
   });
 });
 syncSegmented('quality-stars', starDensity);
+
+// -- Visibility panel
+const btnVisibility    = document.getElementById('btn-visibility');
+const visibilityPanel  = document.getElementById('visibility-panel');
+
+btnVisibility.addEventListener('click', e => {
+  e.stopPropagation();
+  visibilityPanel.classList.toggle('hidden');
+  btnVisibility.setAttribute('aria-pressed', !visibilityPanel.classList.contains('hidden'));
+  qualityPanel.classList.add('hidden');
+});
+
+document.addEventListener('click', e => {
+  if (!visibilityPanel.classList.contains('hidden') &&
+      !visibilityPanel.contains(e.target) && e.target !== btnVisibility) {
+    visibilityPanel.classList.add('hidden');
+    btnVisibility.setAttribute('aria-pressed', 'false');
+  }
+});
+
+function syncVisBtn(btn, visible) {
+  btn.textContent = visible ? 'Visível' : 'Oculto';
+  btn.classList.toggle('active', visible);
+  btn.setAttribute('aria-pressed', String(visible));
+}
+
+const visCometBtn   = document.getElementById('vis-comets');
+const visGalaxyBtn  = document.getElementById('vis-galaxies');
+const visStarsBtn   = document.getElementById('vis-stars');
+const visOrbitsBtn  = document.getElementById('vis-orbits');
+
+visCometBtn.addEventListener('click', () => {
+  showComets = !showComets;
+  applyShowComets(showComets);
+  syncVisBtn(visCometBtn, showComets);
+  updateHash();
+});
+
+visGalaxyBtn.addEventListener('click', () => {
+  showGalaxies = !showGalaxies;
+  galaxyGroup.visible = showGalaxies;
+  syncVisBtn(visGalaxyBtn, showGalaxies);
+  updateHash();
+});
+
+visStarsBtn.addEventListener('click', () => {
+  showStars = !showStars;
+  applyStarDensity(starDensity);
+  syncVisBtn(visStarsBtn, showStars);
+  updateHash();
+});
+
+visOrbitsBtn.addEventListener('click', () => {
+  showOrbits = !showOrbits;
+  btnOrbits.classList.toggle('active', showOrbits);
+  btnOrbits.setAttribute('aria-pressed', String(showOrbits));
+  planets.forEach(p => { p.orbitMesh.visible = showOrbits; });
+  comets.forEach(cm => { cm.orbitLine.visible = showOrbits; });
+  syncVisBtn(visOrbitsBtn, showOrbits);
+  updateHash();
+});
+
+syncVisBtn(visCometBtn,  showComets);
+syncVisBtn(visGalaxyBtn, showGalaxies);
+syncVisBtn(visStarsBtn,  showStars);
+syncVisBtn(visOrbitsBtn, showOrbits);
 
 // -- Cinematic tour
 const TOUR_CAPTIONS = {

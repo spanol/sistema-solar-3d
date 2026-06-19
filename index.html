@@ -16,6 +16,7 @@
         <button id="ctrl-real-scale" class="ctrl-toggle" aria-pressed="false">⊖ Dist. Real</button>
         <button id="btn-freecam" class="ctrl-toggle" aria-pressed="false" aria-label="Câmera livre (F)">🕹 Livre</button>
         <button id="btn-quality" class="ctrl-toggle" aria-pressed="false" aria-label="Configurações de qualidade">⚙ Qualidade</button>
+        <button id="btn-visibility" class="ctrl-toggle" aria-pressed="false" aria-label="Mostrar/ocultar objetos">👁 Objetos</button>
         <button id="btn-tour" class="ctrl-toggle" aria-pressed="false" aria-label="Tour cinematográfico">&#x1F3AC; Tour</button>
       </div>
 
@@ -53,6 +54,26 @@
             <button data-val="medium">Médio</button>
             <button data-val="high">Todas</button>
           </div>
+        </div>
+      </div>
+
+      <div id="visibility-panel" class="hidden" role="dialog" aria-label="Mostrar ou ocultar objetos">
+        <p class="quality-title">Objetos</p>
+        <div class="quality-row">
+          <span class="quality-label">Cometas</span>
+          <button id="vis-comets" class="quality-toggle" aria-pressed="true">Visível</button>
+        </div>
+        <div class="quality-row">
+          <span class="quality-label">Galáxias</span>
+          <button id="vis-galaxies" class="quality-toggle" aria-pressed="true">Visível</button>
+        </div>
+        <div class="quality-row">
+          <span class="quality-label">Estrelas</span>
+          <button id="vis-stars" class="quality-toggle" aria-pressed="true">Visível</button>
+        </div>
+        <div class="quality-row">
+          <span class="quality-label">Órbitas</span>
+          <button id="vis-orbits" class="quality-toggle" aria-pressed="true">Visível</button>
         </div>
       </div>
 
