@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import './background.js';
 import { renderer, scene, camera, orbitControls, fillLight, composer } from './scene.js';
 import { state } from './state.js';
-import { planets, allMoons, sunMesh, sunData, sunState, clickTargets,
+import { planets, allMoons, sunMesh, sunData, sunState, clickTargets, orbitHitTargets,
          TOP_CAM_COMPRESSED, TOP_CAM_REAL, asteroidBeltCompressed, asteroidBeltReal,
          kuiperBeltCompressed, kuiperBeltReal, hoverRing } from './planets.js';
 import { comets, updateComets } from './comets.js';
@@ -174,6 +174,48 @@ function setPointer(cx, cy) {
   pointer.y = -((cy - r.top)  / r.height) * 2 + 1;
 }
 
+// -- Orbit distance tooltip (SIS-122)
+const orbitTooltip = document.createElement('div');
+Object.assign(orbitTooltip.style, {
+  position: 'absolute', pointerEvents: 'none',
+  background: 'rgba(5,8,18,0.90)',
+  border: '1px solid rgba(80,140,255,0.30)',
+  borderRadius: '8px',
+  padding: '0.45rem 0.8rem',
+  color: '#cce4ff',
+  fontFamily: "'Segoe UI', system-ui, sans-serif",
+  fontSize: '12px',
+  lineHeight: '1.6',
+  boxShadow: '0 2px 12px rgba(0,0,0,0.6)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  whiteSpace: 'nowrap',
+  zIndex: '20',
+  opacity: '0',
+  transition: 'opacity 0.12s',
+});
+document.getElementById('app').appendChild(orbitTooltip);
+let _orbitTooltipVisible = false;
+
+function showOrbitTooltip(p, mx, my) {
+  const distMkm = p.data.distanceFromSunMkm;
+  const distAU  = (distMkm / 149.6).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  orbitTooltip.innerHTML =
+    '<span style="color:#4fa3e0;font-weight:600">' + p.data.name + '</span><br>' +
+    distAU + ' UA &nbsp;·&nbsp; ' + distMkm.toLocaleString('pt-BR') + ' M km';
+  const flipLeft = mx > window.innerWidth * 0.68;
+  orbitTooltip.style.left = (mx + (flipLeft ? -210 : 16)) + 'px';
+  orbitTooltip.style.top  = Math.max(4, my - 44) + 'px';
+  orbitTooltip.style.opacity = '1';
+  _orbitTooltipVisible = true;
+}
+
+function hideOrbitTooltip() {
+  if (!_orbitTooltipVisible) return;
+  orbitTooltip.style.opacity = '0';
+  _orbitTooltipVisible = false;
+}
+
 function trySelect(cx, cy) {
   if (cam.animating) return;
   setPointer(cx, cy);
@@ -205,6 +247,7 @@ canvas.addEventListener('mousemove', e => {
   if (cam.animating) {
     canvas.style.cursor = 'default';
     state.hoveredPlanet = null;
+    hideOrbitTooltip();
     return;
   }
   setPointer(e.clientX, e.clientY);
@@ -217,10 +260,24 @@ canvas.addEventListener('mousemove', e => {
     if (hits.length) {
       const hitObj = hits[0].object;
       state.hoveredPlanet = planets.find(q => q.mesh === hitObj || q.ringMesh === hitObj) || null;
+      hideOrbitTooltip();
     } else {
       state.hoveredPlanet = null;
+      if (!sunHit && state.showOrbits) {
+        const orbitHits = raycaster.intersectObjects(orbitHitTargets);
+        if (orbitHits.length) {
+          const hp = planets.find(q => q.orbitHitMesh === orbitHits[0].object);
+          if (hp) showOrbitTooltip(hp, e.clientX, e.clientY);
+          else hideOrbitTooltip();
+        } else {
+          hideOrbitTooltip();
+        }
+      } else {
+        hideOrbitTooltip();
+      }
     }
   } else if (state.viewMode === 'front') {
+    hideOrbitTooltip();
     const hits = raycaster.intersectObjects(clickTargets);
     if (hits.length) {
       const hitObj = hits[0].object;
@@ -233,8 +290,11 @@ canvas.addEventListener('mousemove', e => {
   } else {
     state.hoveredPlanet = null;
     canvas.style.cursor = 'default';
+    hideOrbitTooltip();
   }
 });
+
+canvas.addEventListener('mouseleave', () => hideOrbitTooltip());
 
 const pinch = { active: false, dist: 0 };
 function touchDist(t) {
@@ -389,6 +449,7 @@ const clock = new THREE.Clock();
     p.group.position.z = Math.sin(p.angle) * p.currentOrbitRadius;
     p.mesh.rotation.y += dt * 0.2;
     p.orbitMesh.scale.setScalar(p.currentOrbitRadius / p.data.orbitRadius);
+    p.orbitHitMesh.scale.setScalar(p.currentOrbitRadius / p.data.orbitRadius);
   });
 
   state.realScaleLerpT = THREE.MathUtils.lerp(state.realScaleLerpT, state.realScale ? 1 : 0, orbitLerpK);
