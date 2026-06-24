@@ -109,10 +109,23 @@ export function updateComets(elapsed) {
     const wx = _cometWPos.x, wy = _cometWPos.y, wz = _cometWPos.z;
 
     const len = Math.sqrt(wx * wx + wy * wy + wz * wz) || 1;
+
+    // SIS-81/SIS-82: hide comet when inside solar disk
+    if (len < 5.5) {
+      nucleus.visible = false;
+      tailPts.material.opacity = 0;
+      cm.orbitLine.visible = state.showOrbits;
+      return;
+    }
+    nucleus.visible = state.showComets;
+
     const ax = -wx / len, ay = -wy / len, az = -wz / len;
 
     const tailLength = THREE.MathUtils.clamp((a / r) * 9 * def.tailScale, 0.5, 60);
-    const opacity    = THREE.MathUtils.clamp(1.1 - r / (a * 0.7), 0.05, 0.85);
+    // SIS-82: normalize opacity between perihelion and aphelion
+    const perihelionR = a * (1 - e);
+    const aphelionR   = a * (1 + e);
+    const opacity     = THREE.MathUtils.clamp(1.1 - (r - perihelionR) / (aphelionR - perihelionR), 0.12, 0.85);
     tailPts.material.opacity = opacity;
 
     const perpX = -az, perpZ = ax;

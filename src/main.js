@@ -128,6 +128,11 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     return;
   }
+  // SIS-104: in freecam, Ctrl/Cmd+F would open browser Find - suppress it
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F') && state.viewMode === 'freecam') {
+    e.preventDefault();
+    return;
+  }
   const tag = document.activeElement.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
