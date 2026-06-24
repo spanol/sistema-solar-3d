@@ -452,11 +452,20 @@ export const planets = planetBodies.map((data, i) => {
     }, undefined, _onTex);
   }
 
-  return { mesh, ringMesh, group, orbitMesh, data, angle: startAngle, speed: data.orbitSpeed * 0.007, vr };
+  // Invisible wide ring used for orbit-distance tooltip raycasting (SIS-122)
+  const orbitHitMesh = new THREE.Mesh(
+    new THREE.RingGeometry(data.orbitRadius - 1.5, data.orbitRadius + 1.5, 128),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false })
+  );
+  orbitHitMesh.rotation.x = Math.PI / 2;
+  scene.add(orbitHitMesh);
+
+  return { mesh, ringMesh, group, orbitMesh, orbitHitMesh, data, angle: startAngle, speed: data.orbitSpeed * 0.007, vr };
 });
 
 export const meshList = planets.map(p => p.mesh);
 export const clickTargets = planets.flatMap(p => p.ringMesh ? [p.mesh, p.ringMesh] : [p.mesh]);
+export const orbitHitTargets = planets.map(p => p.orbitHitMesh);
 
 planets.forEach(p => {
   p.realOrbitRadius    = p.data.distanceFromSunMkm * SCENE_UNITS_PER_MKM;
