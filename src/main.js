@@ -249,6 +249,15 @@ const PLANET_TEXTURES = {
   neptune: '/textures/2k_neptune.jpg',
 };
 
+const MOON_TEXTURES = {
+  moon:     '/textures/1k_moon.jpg',
+  io:       '/textures/1k_io.jpg',
+  europa:   '/textures/1k_europa.jpg',
+  ganymede: '/textures/1k_ganymede.jpg',
+  callisto: '/textures/1k_callisto.jpg',
+  titan:    '/textures/1k_titan.webp',
+};
+
 // -- Loading screen: tracks all texture loads, fades out when done
 const _loadScreen  = document.getElementById('loading-screen');
 const _loadBar     = document.getElementById('loading-bar');
@@ -522,6 +531,32 @@ function updateComets(elapsed) {
   });
 }
 
+// -- Atmosphere glow helpers (Earth, Venus, Uranus, Neptune)
+function makeAtmGlowTex(r, g, b) {
+  const sz = 256;
+  const c = document.createElement('canvas');
+  c.width = c.height = sz;
+  const ctx = c.getContext('2d');
+  const cx = sz / 2;
+  // Annular gradient: inside innerR is transparent (planet disc area), ring beyond glows
+  const grad = ctx.createRadialGradient(cx, cx, cx * 0.42, cx, cx, cx);
+  grad.addColorStop(0.00, `rgba(${r},${g},${b},0.00)`);
+  grad.addColorStop(0.14, `rgba(${r},${g},${b},0.62)`);
+  grad.addColorStop(0.40, `rgba(${r},${g},${b},0.18)`);
+  grad.addColorStop(0.75, `rgba(${r},${g},${b},0.05)`);
+  grad.addColorStop(1.00, `rgba(${r},${g},${b},0.00)`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, sz, sz);
+  return new THREE.CanvasTexture(c);
+}
+
+const ATMO = {
+  earth:   { r: 100, g: 185, b: 255, color: 0x4499ff, rimScale: [1.07, 1.18], rimOpacity: [0.26, 0.10] },
+  venus:   { r: 255, g: 200, b: 120, color: 0xffc878, rimScale: [1.09, 1.22], rimOpacity: [0.30, 0.12] },
+  uranus:  { r: 120, g: 228, b: 245, color: 0x78e4f5, rimScale: [1.06, 1.16], rimOpacity: [0.22, 0.09] },
+  neptune: { r:  80, g: 120, b: 255, color: 0x5078ff, rimScale: [1.07, 1.18], rimOpacity: [0.26, 0.10] },
+};
+
 // -- Planets
 const planets = planetBodies.map((data, i) => {
   const startAngle = (i / planetBodies.length) * Math.PI * 2;
@@ -623,6 +658,41 @@ const planets = planetBodies.map((data, i) => {
     }, undefined, _onTex);
   }
 
+  // Atmosphere glow: BackSide rim spheres + corona sprite (Earth, Venus, Uranus, Neptune)
+  const atmDef = ATMO[data.id];
+  if (atmDef) {
+    const { r, g, b, color, rimScale, rimOpacity } = atmDef;
+
+    // Rim spheres: BackSide + depth-tested against planet mesh → natural limb glow
+    rimScale.forEach((scale, idx) => {
+      tiltGroup.add(new THREE.Mesh(
+        new THREE.SphereGeometry(vr * scale, 32, 32),
+        new THREE.MeshBasicMaterial({
+          color,
+          transparent: true,
+          opacity: rimOpacity[idx],
+          side: THREE.BackSide,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        })
+      ));
+    });
+
+    // Corona sprite: always faces camera → annular halo visible from top-down too
+    const atmSprite = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: makeAtmGlowTex(r, g, b),
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    // inner transparent zone radius = 0.42 * (spriteS/2) ≈ vr*1.1 (just beyond planet surface)
+    const spriteS = vr * 5.25;
+    atmSprite.scale.set(spriteS, spriteS, 1);
+    group.add(atmSprite);
+  }
+
   return { mesh, ringMesh, group, orbitMesh, data, angle: startAngle, speed: data.orbitSpeed * 0.007, vr };
 });
 
@@ -666,6 +736,15 @@ planets.forEach(p => {
     );
     moonMesh.visible = false;
     scene.add(moonMesh);
+    const moonTexPath = MOON_TEXTURES[md.id];
+    if (moonTexPath) {
+      textureLoader.load(moonTexPath, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        moonMesh.material.map = tex;
+        moonMesh.material.color.set(0xffffff);
+        moonMesh.material.needsUpdate = true;
+      });
+    }
     const mo = {
       mesh: moonMesh,
       data: md,
@@ -774,6 +853,48 @@ Object.assign(hint.style, {
   whiteSpace: 'nowrap',
 });
 document.getElementById('app').appendChild(hint);
+
+// -- Orbit distance tooltip
+const orbitTooltip = document.createElement('div');
+Object.assign(orbitTooltip.style, {
+  position: 'absolute', pointerEvents: 'none',
+  background: 'rgba(5,8,18,0.90)',
+  border: '1px solid rgba(80,140,255,0.30)',
+  borderRadius: '8px',
+  padding: '0.45rem 0.8rem',
+  color: '#cce4ff',
+  fontFamily: "'Segoe UI', system-ui, sans-serif",
+  fontSize: '12px',
+  lineHeight: '1.6',
+  boxShadow: '0 2px 12px rgba(0,0,0,0.6)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  whiteSpace: 'nowrap',
+  zIndex: '20',
+  opacity: '0',
+  transition: 'opacity 0.12s',
+});
+document.getElementById('app').appendChild(orbitTooltip);
+let _orbitTooltipVisible = false;
+
+function showOrbitTooltip(p, mx, my) {
+  const distMkm = p.data.distanceFromSunMkm;
+  const distAU  = (distMkm / 149.6).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  orbitTooltip.innerHTML =
+    '<span style="color:#4fa3e0;font-weight:600">' + p.data.name + '</span><br>' +
+    distAU + ' UA &nbsp;·&nbsp; ' + distMkm.toLocaleString('pt-BR') + ' M km';
+  const flipLeft = mx > window.innerWidth * 0.68;
+  orbitTooltip.style.left = (mx + (flipLeft ? -210 : 16)) + 'px';
+  orbitTooltip.style.top  = Math.max(4, my - 44) + 'px';
+  orbitTooltip.style.opacity = '1';
+  _orbitTooltipVisible = true;
+}
+
+function hideOrbitTooltip() {
+  if (!_orbitTooltipVisible) return;
+  orbitTooltip.style.opacity = '0';
+  _orbitTooltipVisible = false;
+}
 
 // -- State
 let viewMode = 'top';
@@ -1533,6 +1654,7 @@ function startTour() {
   viewControls.classList.add('hidden');
   planetStrip.classList.add('hidden');
   qualityPanel.classList.add('hidden');
+  searchWrap.classList.add('hidden');
   tourOverlay.classList.remove('hidden');
   tourPlayPauseBtn.innerHTML = '&#9646;&#9646;';
   tourPlayPauseBtn.setAttribute('aria-label', 'Pausar tour');
@@ -1551,6 +1673,7 @@ function stopTour() {
   updateHash();
   hint.style.opacity = '1';
   viewControls.classList.remove('hidden');
+  searchWrap.classList.remove('hidden');
   cam.tgtUp.set(0, 0, -1);
   moveCameraTo((realScale ? TOP_CAM_REAL : TOP_CAM_COMPRESSED).clone(), new THREE.Vector3(0, 0, 0));
 }
@@ -1662,6 +1785,7 @@ function selectPlanet(p) {
   viewControls.classList.add('hidden');
   dateControls.classList.add('hidden');
   qualityPanel.classList.add('hidden');
+  searchWrap.classList.add('hidden');
   planetStrip.classList.remove('hidden');
   updatePlanetStrip(p);
 
@@ -1703,6 +1827,7 @@ function backToTop() {
   hint.style.opacity = '1';
   viewControls.classList.remove('hidden');
   dateControls.classList.remove('hidden');
+  searchWrap.classList.remove('hidden');
   planetStrip.classList.add('hidden');
 
   cam.tgtUp.set(0, 0, -1);
@@ -1901,6 +2026,84 @@ shortcutsOverlay.addEventListener('click', e => {
   if (e.target === shortcutsOverlay) toggleShortcuts();
 });
 
+
+// -- Planet Search
+const searchWrap    = document.getElementById('planet-search');
+const searchInput   = document.getElementById('planet-search-input');
+const searchResults = document.getElementById('planet-search-results');
+let _searchMatches   = [];
+let _searchSelectIdx = -1;
+
+function _searchFilter(q) {
+  if (!q.trim()) return [];
+  const lower = q.toLowerCase();
+  return planets.filter(p => p.data.name.toLowerCase().includes(lower));
+}
+
+function _searchHighlight(idx) {
+  searchResults.querySelectorAll('.search-result-item').forEach((el, i) => {
+    el.setAttribute('aria-selected', String(i === idx));
+  });
+  _searchSelectIdx = idx;
+}
+
+function _searchRender(matches) {
+  _searchMatches   = matches;
+  _searchSelectIdx = -1;
+  searchResults.innerHTML = '';
+  if (!matches.length) { searchResults.classList.add('hidden'); return; }
+  matches.forEach(p => {
+    const li  = document.createElement('li');
+    li.className = 'search-result-item';
+    li.setAttribute('role', 'option');
+    li.setAttribute('aria-selected', 'false');
+    const dot = document.createElement('span');
+    dot.className = 'search-result-dot';
+    dot.style.background = p.data.color;
+    const txt = document.createElement('span');
+    txt.textContent = p.data.name;
+    li.append(dot, txt);
+    li.addEventListener('mousedown', e => { e.preventDefault(); _searchCommit(p); });
+    searchResults.appendChild(li);
+  });
+  searchResults.classList.remove('hidden');
+}
+
+function _searchCommit(p) {
+  searchInput.value = '';
+  searchResults.classList.add('hidden');
+  searchInput.blur();
+  if (tourMode) stopTour();
+  if (viewMode === 'freecam') exitFreecam();
+  selectPlanet(p);
+}
+
+searchInput.addEventListener('input', () => {
+  _searchRender(_searchFilter(searchInput.value));
+});
+
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _searchHighlight(Math.min(_searchSelectIdx + 1, _searchMatches.length - 1));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _searchHighlight(Math.max(_searchSelectIdx - 1, 0));
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    const target = _searchSelectIdx >= 0 ? _searchMatches[_searchSelectIdx]
+                 : _searchMatches.length === 1 ? _searchMatches[0] : null;
+    if (target) _searchCommit(target);
+  } else if (e.key === 'Escape') {
+    searchInput.value = '';
+    searchResults.classList.add('hidden');
+    searchInput.blur();
+  }
+});
+
+searchInput.addEventListener('blur', () => {
+  setTimeout(() => searchResults.classList.add('hidden'), 150);
+});
 // -- Unified keyboard handler
 document.addEventListener('keydown', e => {
   // Suppress browser native page zoom (Ctrl/⌘ + wheel, +/-/0)
@@ -1936,6 +2139,13 @@ document.addEventListener('keydown', e => {
       break;
     case '?':
       toggleShortcuts();
+      break;
+    case '/':
+      if (viewMode === 'top' || viewMode === 'freecam') {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      }
       break;
     default:
       if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey && !e.altKey && !cam.animating) {
@@ -1986,6 +2196,7 @@ canvas.addEventListener('mousemove', e => {
   if (cam.animating) {
     canvas.style.cursor = 'default';
     hoveredPlanet = null;
+    hideOrbitTooltip();
     return;
   }
   setPointer(e.clientX, e.clientY);
@@ -2000,10 +2211,24 @@ canvas.addEventListener('mousemove', e => {
     if (hits.length) {
       const hitObj = hits[0].object;
       hoveredPlanet = planets.find(q => q.mesh === hitObj || q.ringMesh === hitObj) || null;
+      hideOrbitTooltip();
     } else {
       hoveredPlanet = null;
+      if (!sunHit && showOrbits) {
+        const orbitHits = raycaster.intersectObjects(orbitHitTargets);
+        if (orbitHits.length) {
+          const hp = planets.find(q => q.orbitHitMesh === orbitHits[0].object);
+          if (hp) showOrbitTooltip(hp, e.clientX, e.clientY);
+          else hideOrbitTooltip();
+        } else {
+          hideOrbitTooltip();
+        }
+      } else {
+        hideOrbitTooltip();
+      }
     }
   } else if (viewMode === 'front') {
+    hideOrbitTooltip();
     const hits = raycaster.intersectObjects(clickTargets);
     if (hits.length) {
       const hitObj = hits[0].object;
@@ -2016,8 +2241,11 @@ canvas.addEventListener('mousemove', e => {
   } else {
     hoveredPlanet = null;
     canvas.style.cursor = 'default';
+    hideOrbitTooltip();
   }
 });
+
+canvas.addEventListener('mouseleave', () => hideOrbitTooltip());
 
 canvas.addEventListener('touchend', e => {
   e.preventDefault();
@@ -2138,6 +2366,7 @@ const clock = new THREE.Clock();
     p.group.position.z = Math.sin(p.angle) * p.currentOrbitRadius;
     p.mesh.rotation.y += dt * 0.2;
     p.orbitMesh.scale.setScalar(p.currentOrbitRadius / p.data.orbitRadius);
+    p.orbitHitMesh.scale.setScalar(p.currentOrbitRadius / p.data.orbitRadius);
   });
 
   // Asteroid belt cross-fade between compressed and real-scale positions
