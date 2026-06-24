@@ -34,6 +34,27 @@ export const MOON_TEXTURES = {
   titan:    '/textures/1k_titan.webp',
 };
 
+// -- Loading screen: fades out when all planet textures finish loading
+// (regressed in SIS-124 refactor — restored here where texture loading lives)
+const _loadScreen = document.getElementById('loading-screen');
+const _loadBar    = document.getElementById('loading-bar');
+const _loadPct    = document.getElementById('loading-percent');
+const _TOTAL_TEX  = Object.keys(PLANET_TEXTURES).length + 1; // +1 for saturn ring alpha
+let   _loadedTex  = 0;
+
+function _onTex() {
+  _loadedTex++;
+  const pct = Math.round((_loadedTex / _TOTAL_TEX) * 100);
+  _loadBar.style.width  = pct + '%';
+  _loadPct.textContent  = pct + '%';
+  if (_loadedTex >= _TOTAL_TEX) {
+    setTimeout(() => {
+      _loadScreen.classList.add('loaded');
+      setTimeout(() => { if (_loadScreen.parentNode) _loadScreen.remove(); }, 550);
+    }, 180);
+  }
+}
+
 // Rocky planets / moons that receive procedural normal maps.
 // [sobelStrength, normalScale]: strength controls elevation contrast depth;
 // normalScale further multiplies the final per-pixel shading.
@@ -110,7 +131,8 @@ textureLoader.load(PLANET_TEXTURES.sol, (tex) => {
   sunMesh.material.color.set(0xffffff);
   sunMesh.material.needsUpdate = true;
   sunState.textureLoaded = true;
-});
+  _onTex();
+}, undefined, _onTex);
 
 [
   { r: 5.8,  color: 0xffaa00, opacity: 0.22 },
@@ -203,6 +225,121 @@ kuiperBeltReal.material.opacity = 0;
 scene.add(kuiperBeltCompressed);
 scene.add(kuiperBeltReal);
 
+// -- Earth day/night shader helpers
+function makeNightMapTexture() {
+  const W = 2048, H = 1024;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#000208';
+  ctx.fillRect(0, 0, W, H);
+
+  function city(lon, lat, rad, bright) {
+    const x = ((lon + 180) / 360) * W;
+    const y = ((90 - lat) / 180) * H;
+    const r = (rad / 360) * W;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0,   `rgba(255,245,200,${bright})`);
+    g.addColorStop(0.3, `rgba(255,220,140,${bright * 0.55})`);
+    g.addColorStop(0.7, `rgba(255,180, 80,${bright * 0.20})`);
+    g.addColorStop(1,   `rgba(255,160, 40,0)`);
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  [
+    // North America
+    [-74,40.7,4.0,.95],[-87.6,41.9,3.0,.85],[-118.2,34,3.5,.90],
+    [-122.4,37.8,2.5,.80],[-71,42.4,2.2,.75],[-77,39,1.8,.65],
+    [-75.2,39.9,1.8,.65],[-84.4,33.7,1.5,.60],[-97,32.8,2.0,.70],
+    [-95.4,29.8,1.5,.60],[-112,33.4,1.5,.60],[-80.2,25.8,1.5,.60],
+    [-90.1,30,1.2,.50],[-86.8,36.2,1.0,.45],[-93.1,44.9,1.2,.50],
+    [-81.7,41.5,1.0,.45],[-83,39.9,1.0,.45],[-122.3,47.6,1.5,.60],
+    [-79.4,43.7,2.0,.70],[-73.6,45.5,1.8,.65],[-99.1,19.4,2.5,.80],
+    [-66.9,10.5,.8,.35],[-88,15,.7,.30],
+    // South America
+    [-46.6,-23.5,3.0,.85],[-43.2,-22.9,2.5,.80],[-58.4,-34.6,2.0,.70],
+    [-70.7,-33.4,1.5,.60],[-77,-12,1.0,.40],[-74.1,4.7,.8,.35],
+    // Europe
+    [-8.7,38.7,1.2,.50],[2.3,48.9,3.0,.92],[-0.1,51.5,3.0,.92],
+    [4.9,52.4,2.2,.82],[6.9,50.9,2.0,.78],[8.7,50.1,1.5,.65],
+    [13.4,52.5,2.0,.78],[12.5,41.9,2.0,.72],[9.2,45.5,2.0,.72],
+    [-3.7,40.4,2.0,.72],[28.9,41,2.0,.78],[37.6,55.8,2.5,.88],
+    [30.3,59.9,1.5,.62],[17,48.2,1.5,.62],[23.7,38,1.5,.58],
+    [14.5,50.1,1.2,.52],[18,59.3,1.0,.48],[21,52.2,1.2,.52],
+    [26.1,44.4,1.0,.48],[24.9,60.2,.8,.42],[-2.2,53.5,1.5,.62],
+    [-1.9,52.5,1.5,.60],[4.4,50.8,1.5,.68],[16.4,48.2,1.2,.52],
+    // Middle East
+    [31.2,30.1,2.0,.72],[46.7,24.7,2.0,.72],[55.3,25.2,1.5,.62],
+    [51.4,35.7,1.5,.62],[44.4,33.3,1.2,.52],[35.2,31.8,1.5,.62],
+    [67.1,24.9,1.5,.62],[51.5,25.3,1.0,.48],[49.1,55.8,.8,.38],
+    [56.8,53.2,.7,.32],[60.6,56.9,.8,.38],[82.9,54.9,.7,.32],
+    // Africa
+    [3.4,6.5,1.5,.58],[28,-26.2,1.5,.62],[18.4,-33.9,1.0,.42],
+    [36.8,-1.3,1.0,.42],[38.8,9,.8,.38],[7.5,9.1,.8,.38],
+    [32.5,.3,.7,.32],[15.3,4.4,.5,.22],
+    // South/Southeast Asia
+    [72.9,19.1,2.5,.88],[77.2,28.6,2.5,.88],[80.3,13.1,1.5,.62],
+    [88.4,22.6,2.0,.78],[90.4,23.8,2.0,.78],[78.5,17.4,1.2,.52],
+    [77.6,12.9,1.2,.52],[72.6,23,1.0,.48],[75.8,26.9,1.0,.48],
+    [80.9,26.9,.8,.38],[85.3,27.7,.7,.32],[83,17.7,.8,.35],
+    [100.5,13.8,1.5,.62],[101.7,3.2,1.5,.62],[103.8,1.3,1.2,.52],
+    [106.8,-6.2,1.5,.62],[106.7,10.8,1.2,.52],[107.6,16.5,.8,.35],
+    // East Asia
+    [121,14.6,1.5,.62],[114.2,22.3,2.5,.88],[121.5,31.2,3.0,.92],
+    [116.4,39.9,3.0,.92],[104.1,30.6,1.5,.62],[117.2,39.1,1.5,.62],
+    [113.3,23.1,2.5,.88],[118.8,32.1,1.5,.62],[114.3,30.6,1.5,.62],
+    [126.6,45.8,1.0,.48],[125.3,43.9,1.0,.48],[123.4,41.8,1.2,.52],
+    [106.6,29.6,1.5,.62],[108.9,34.3,1.2,.52],[120.2,30.3,1.2,.52],
+    [113.9,28.2,1.2,.52],[127,37.6,2.0,.78],[139.7,35.7,3.5,.97],
+    [135.5,34.7,2.5,.88],[130.4,33.6,1.5,.62],[141.4,43.1,1.0,.48],
+    // Oceania
+    [151.2,-33.9,2.0,.78],[144.9,-37.8,2.0,.78],[153,-27.5,1.2,.52],
+    [115.9,-32,1.0,.48],[174.8,-37,1.0,.42],
+  ].forEach(([lon, lat, r, b]) => city(lon, lat, r, b));
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function makeEarthMaterial(dayTex, nightTex) {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      dayTexture:   { value: dayTex },
+      nightTexture: { value: nightTex },
+    },
+    vertexShader: /* glsl */`
+      varying vec2  vUv;
+      varying vec3  vWNormal;
+      varying vec3  vWPos;
+      void main() {
+        vUv      = uv;
+        vec4 wp  = modelMatrix * vec4(position, 1.0);
+        vWPos    = wp.xyz;
+        vWNormal = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: /* glsl */`
+      uniform sampler2D dayTexture;
+      uniform sampler2D nightTexture;
+      varying vec2 vUv;
+      varying vec3 vWNormal;
+      varying vec3 vWPos;
+      void main() {
+        vec3  sunDir    = normalize(-vWPos);
+        float cosA      = dot(vWNormal, sunDir);
+        float lighting  = 0.04 + max(cosA, 0.0) * 0.96;
+        vec4  dayCol    = texture2D(dayTexture,   vUv) * lighting;
+        float nightFade = 1.0 - smoothstep(-0.25, 0.05, cosA);
+        vec4  nightCol  = texture2D(nightTexture, vUv) * nightFade * 2.0;
+        gl_FragColor    = vec4((dayCol + nightCol).rgb, 1.0);
+      }
+    `,
+  });
+}
+
 // -- Planets
 export const planets = planetBodies.map((data, i) => {
   const startAngle = (i / planetBodies.length) * Math.PI * 2;
@@ -232,20 +369,31 @@ export const planets = planetBodies.map((data, i) => {
 
   const planetTexPath = PLANET_TEXTURES[data.id];
   if (planetTexPath) {
-    textureLoader.load(planetTexPath, (tex) => {
-      tex.colorSpace = THREE.SRGBColorSpace;
-      mesh.material.map = tex;
-      mesh.material.color.set(0xffffff);
-      const nrmParams = ROCKY_NORMAL_PARAMS[data.id];
-      if (nrmParams) {
-        const nrmMap = genNormalMap(tex, nrmParams[0]);
-        if (nrmMap) {
-          mesh.material.normalMap = nrmMap;
-          mesh.material.normalScale.set(nrmParams[1], nrmParams[1]);
+    if (data.id === 'earth') {
+      const nightTex = makeNightMapTexture();
+      textureLoader.load(planetTexPath, (dayTex) => {
+        dayTex.colorSpace = THREE.SRGBColorSpace;
+        mesh.material.dispose();
+        mesh.material = makeEarthMaterial(dayTex, nightTex);
+        _onTex();
+      }, undefined, _onTex);
+    } else {
+      textureLoader.load(planetTexPath, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        mesh.material.map = tex;
+        mesh.material.color.set(0xffffff);
+        const nrmParams = ROCKY_NORMAL_PARAMS[data.id];
+        if (nrmParams) {
+          const nrmMap = genNormalMap(tex, nrmParams[0]);
+          if (nrmMap) {
+            mesh.material.normalMap = nrmMap;
+            mesh.material.normalScale.set(nrmParams[1], nrmParams[1]);
+          }
         }
-      }
-      mesh.material.needsUpdate = true;
-    });
+        mesh.material.needsUpdate = true;
+        _onTex();
+      }, undefined, _onTex);
+    }
   }
 
   let ringMesh = null;
@@ -300,7 +448,8 @@ export const planets = planetBodies.map((data, i) => {
     textureLoader.load('/textures/2k_saturn_ring_alpha.png', (tex) => {
       ringMesh.material.alphaMap = tex;
       ringMesh.material.needsUpdate = true;
-    });
+      _onTex();
+    }, undefined, _onTex);
   }
 
   return { mesh, ringMesh, group, orbitMesh, data, angle: startAngle, speed: data.orbitSpeed * 0.007, vr };
