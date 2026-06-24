@@ -213,5 +213,37 @@
       "Desde sua descoberta em 1846, completou apenas uma volta ao Sol (em 2011).",
       "Tritão, sua maior lua, orbita ao contrário e está gradualmente se aproximando de Netuno."
     ]
+  },
+  {
+    "id": "pluto",
+    "name": "Plutão",
+    "description": "Planeta anão no Cinturão de Kuiper — companheiro de Caronte, que tem quase metade do seu tamanho.",
+    "diameterKm": 2376,
+    "distanceFromSunMkm": 5906,
+    "dayLength": "6,4 dias terrestres (retrógrado)",
+    "yearLength": "247,9 anos terrestres",
+    "gravityFactor": 0.063,
+    "yearLengthDays": 90560,
+    "color": "#c49a6c",
+    "radius": 0.28,
+    "relativeSize": 0.28,
+    "orbitRadius": 72,
+    "orbitSpeed": 0.0038,
+    "axialTilt": 122.5,
+    "moons": [
+      {
+        "id": "charon",
+        "name": "Caronte",
+        "color": "#8a8a9a",
+        "radius": 0.22,
+        "orbitRadius": 1.6,
+        "orbitSpeed": 0.8
+      }
+    ],
+    "facts": [
+      "Plutão foi rebaixado a planeta anão em 2006, inaugurando a categoria de objetos do Cinturão de Kuiper.",
+      "Caronte tem metade do diâmetro de Plutão — a maior proporção planeta–lua do Sistema Solar.",
+      "A sonda New Horizons revelou em 2015 montanhas de gelo de água com 3.500 m de altitude na superfície de Plutão."
+    ]
   }
 ]

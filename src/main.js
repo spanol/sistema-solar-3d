@@ -348,6 +348,37 @@ asteroidBeltReal.material.opacity = 0;
 scene.add(asteroidBeltCompressed);
 scene.add(asteroidBeltReal);
 
+// -- Kuiper Belt (diffuse ring beyond Neptune, straddling Pluto's orbit)
+function makeKuiperBelt(innerR, outerR, count) {
+  const pos = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const r = innerR + Math.random() * (outerR - innerR);
+    pos[i * 3]     = Math.cos(angle) * r;
+    pos[i * 3 + 1] = (Math.random() - 0.5) * 2.8;
+    pos[i * 3 + 2] = Math.sin(angle) * r;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  return new THREE.Points(geo, new THREE.PointsMaterial({
+    color: 0x8aaab8,
+    size: 0.18,
+    sizeAttenuation: true,
+    map: asteroidSpriteTex,
+    transparent: true,
+    depthWrite: false,
+    alphaTest: 0.01,
+    opacity: 0.40,
+  }));
+}
+
+// Compressed: 64–84 units (straddles Pluto at 72); Real: 30–55 AU = 480–880 units
+const kuiperBeltCompressed = makeKuiperBelt(64, 84, 1200);
+const kuiperBeltReal       = makeKuiperBelt(480, 880, 1200);
+kuiperBeltReal.material.opacity = 0;
+scene.add(kuiperBeltCompressed);
+scene.add(kuiperBeltReal);
+
 // -- Comets — eccentric orbits, anti-sun tail
 // Omega = longitude of ascending node, argPeri = argument of perihelion (radians)
 const COMET_DEFS = [
@@ -607,6 +638,18 @@ planets.forEach(p => {
   p.targetOrbitRadius  = p.data.orbitRadius;
 });
 
+// -- Orbit hit meshes (wider invisible rings for distance tooltip raycasting)
+planets.forEach(p => {
+  const hitRing = new THREE.Mesh(
+    new THREE.RingGeometry(p.data.orbitRadius - 1.5, p.data.orbitRadius + 1.5, 128),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false })
+  );
+  hitRing.rotation.x = Math.PI / 2;
+  scene.add(hitRing);
+  p.orbitHitMesh = hitRing;
+});
+const orbitHitTargets = planets.map(p => p.orbitHitMesh);
+
 const TOP_CAM_COMPRESSED = new THREE.Vector3(0, 130, 32);
 const TOP_CAM_REAL       = new THREE.Vector3(0, 560, 32);
 
@@ -740,6 +783,7 @@ let showOrbits = true;
 let showLabels = true;
 let showComets = true;
 let showGalaxies = true;
+let showKuiperBelt = true;
 let showStars = true;
 let timeSpeed = 1;
 let realtimeMode = false;
@@ -837,9 +881,10 @@ function serializeHash() {
   if (activePlanet) parts.push(`planet=${activePlanet.data.id}`);
   parts.push(`orbits=${showOrbits ? 1 : 0}`);
   parts.push(`labels=${showLabels ? 1 : 0}`);
-  if (!showComets)   parts.push('comets=0');
-  if (!showGalaxies) parts.push('galaxies=0');
-  if (!showStars)    parts.push('stars=0');
+  if (!showComets)      parts.push('comets=0');
+  if (!showGalaxies)   parts.push('galaxies=0');
+  if (!showStars)      parts.push('stars=0');
+  if (!showKuiperBelt) parts.push('kuiper=0');
   parts.push(`speed=${timeSpeed}`);
   if (realScale) parts.push('realscale=1');
   if (realtimeMode) parts.push('realtime=1');
@@ -887,6 +932,12 @@ function restoreFromHash() {
     showStars = params.stars !== '0';
     applyStarDensity(starDensity);
     syncVisBtn(document.getElementById('vis-stars'), showStars);
+  }
+
+  if ('kuiper' in params) {
+    showKuiperBelt = params.kuiper !== '0';
+    applyShowKuiperBelt(showKuiperBelt);
+    syncVisBtn(document.getElementById('vis-kuiper'), showKuiperBelt);
   }
 
   if ('speed' in params) {
@@ -1357,6 +1408,22 @@ syncVisBtn(visGalaxyBtn, showGalaxies);
 syncVisBtn(visStarsBtn,  showStars);
 syncVisBtn(visOrbitsBtn, showOrbits);
 
+const visKuiperBtn = document.getElementById('vis-kuiper');
+
+function applyShowKuiperBelt(show) {
+  kuiperBeltCompressed.visible = show;
+  kuiperBeltReal.visible = show;
+}
+
+visKuiperBtn.addEventListener('click', () => {
+  showKuiperBelt = !showKuiperBelt;
+  applyShowKuiperBelt(showKuiperBelt);
+  syncVisBtn(visKuiperBtn, showKuiperBelt);
+  updateHash();
+});
+
+syncVisBtn(visKuiperBtn, showKuiperBelt);
+
 // -- Cinematic tour
 const TOUR_CAPTIONS = {
   mercury: { name: 'Mercúrio',  hint: 'O planeta mais próximo do Sol — um ano dura apenas 88 dias terrestres' },
@@ -1367,6 +1434,7 @@ const TOUR_CAPTIONS = {
   saturn:  { name: 'Saturno',  hint: 'Anéis majestosos de gelo e rocha — visíveis com um telescópio básico' },
   uranus:  { name: 'Urano',    hint: 'Inclinado de lado — o eixo de rotação inclina 98° em relação à órbita' },
   neptune: { name: 'Netuno',   hint: 'Ventos supersônicos de 2.100 km/h — o planeta mais ventoso do sistema solar' },
+  pluto:   { name: 'Plutão',  hint: 'Planeta anão no Cinturão de Kuiper — Caronte tem metade do seu tamanho' },
 };
 
 let tourMode     = false;
@@ -1870,7 +1938,7 @@ document.addEventListener('keydown', e => {
       toggleShortcuts();
       break;
     default:
-      if (e.key >= '1' && e.key <= '8' && !e.ctrlKey && !e.metaKey && !e.altKey && !cam.animating) {
+      if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey && !e.altKey && !cam.animating) {
         const idx = parseInt(e.key, 10) - 1;
         if (idx < planets.length) selectPlanet(planets[idx]);
       }
@@ -2076,6 +2144,12 @@ const clock = new THREE.Clock();
   realScaleLerpT = THREE.MathUtils.lerp(realScaleLerpT, realScale ? 1 : 0, orbitLerpK);
   asteroidBeltCompressed.material.opacity = 0.75 * (1 - realScaleLerpT);
   asteroidBeltReal.material.opacity       = 0.75 * realScaleLerpT;
+
+  // Kuiper Belt cross-fade
+  if (showKuiperBelt) {
+    kuiperBeltCompressed.material.opacity = 0.40 * (1 - realScaleLerpT);
+    kuiperBeltReal.material.opacity       = 0.40 * realScaleLerpT;
+  }
 
   // Moon orbits – always accumulate, visible only in front view of parent
   const isFront = viewMode === 'front';

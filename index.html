@@ -16,6 +16,15 @@
     </div>
     <div id="app">
       <canvas id="solar-canvas"></canvas>
+
+      <div id="planet-search" aria-label="Busca de planeta">
+        <input id="planet-search-input" type="text" placeholder="🔍 Buscar planeta…"
+               autocomplete="off" spellcheck="false"
+               aria-label="Buscar planeta" aria-haspopup="listbox"
+               aria-autocomplete="list" aria-controls="planet-search-results" />
+        <ul id="planet-search-results" class="hidden" role="listbox" aria-label="Resultados"></ul>
+      </div>
+
       <div id="view-controls">
         <button id="ctrl-orbits" class="ctrl-toggle active" aria-pressed="true">⊙ Órbitas</button>
         <button id="ctrl-labels" class="ctrl-toggle active" aria-pressed="true">◉ Labels</button>
@@ -81,6 +90,10 @@
         <div class="quality-row">
           <span class="quality-label">Órbitas</span>
           <button id="vis-orbits" class="quality-toggle" aria-pressed="true">Visível</button>
+        </div>
+        <div class="quality-row">
+          <span class="quality-label">Cinturão de Kuiper</span>
+          <button id="vis-kuiper" class="quality-toggle" aria-pressed="true">Visível</button>
         </div>
       </div>
 
@@ -183,6 +196,7 @@
             <kbd>F</kbd><span>Ativar / desativar câmera livre</span>
             <kbd>Espaço</kbd><span>Pausar / retomar rotação</span>
             <kbd>?</kbd><span>Mostrar / ocultar atalhos</span>
+            <kbd>/</kbd><span>Focar busca de planeta</span>
           </div>
         </div>
       </div>
