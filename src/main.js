@@ -249,6 +249,26 @@ const PLANET_TEXTURES = {
   neptune: '/textures/2k_neptune.jpg',
 };
 
+// -- Loading screen: tracks all texture loads, fades out when done
+const _loadScreen  = document.getElementById('loading-screen');
+const _loadBar     = document.getElementById('loading-bar');
+const _loadPct     = document.getElementById('loading-percent');
+const _TOTAL_TEX   = Object.keys(PLANET_TEXTURES).length + 1; // +1 for saturn ring alpha
+let   _loadedTex   = 0;
+
+function _onTex() {
+  _loadedTex++;
+  const pct = Math.round((_loadedTex / _TOTAL_TEX) * 100);
+  _loadBar.style.width   = pct + '%';
+  _loadPct.textContent   = pct + '%';
+  if (_loadedTex >= _TOTAL_TEX) {
+    setTimeout(() => {
+      _loadScreen.classList.add('loaded');
+      setTimeout(() => { if (_loadScreen.parentNode) _loadScreen.remove(); }, 550);
+    }, 180);
+  }
+}
+
 // -- Sun
 let sunTextureLoaded = false;
 const sunMesh = new THREE.Mesh(
@@ -263,7 +283,8 @@ textureLoader.load(PLANET_TEXTURES.sol, (tex) => {
   sunMesh.material.color.set(0xffffff);
   sunMesh.material.needsUpdate = true;
   sunTextureLoaded = true;
-});
+  _onTex();
+}, undefined, _onTex);
 
 [
   { r: 5.8,  color: 0xffaa00, opacity: 0.22 },
@@ -506,7 +527,8 @@ const planets = planetBodies.map((data, i) => {
       mesh.material.map = tex;
       mesh.material.color.set(0xffffff);
       mesh.material.needsUpdate = true;
-    });
+      _onTex();
+    }, undefined, _onTex);
   }
 
   // Ring as sibling of planet mesh inside tiltGroup so it stays in the equatorial plane
@@ -566,7 +588,8 @@ const planets = planetBodies.map((data, i) => {
     textureLoader.load('/textures/2k_saturn_ring_alpha.png', (tex) => {
       ringMesh.material.alphaMap = tex;
       ringMesh.material.needsUpdate = true;
-    });
+      _onTex();
+    }, undefined, _onTex);
   }
 
   return { mesh, ringMesh, group, orbitMesh, data, angle: startAngle, speed: data.orbitSpeed * 0.007, vr };

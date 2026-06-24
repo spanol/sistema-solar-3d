@@ -1072,3 +1072,57 @@ html, body {
     display: none;
   }
 }
+
+/* ── Loading screen ─────────────────────────────────────────────── */
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  background: #020408;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: opacity 0.5s ease;
+}
+
+#loading-screen.loaded {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-inner {
+  text-align: center;
+  user-select: none;
+}
+
+.loading-title {
+  font-size: 1.4rem;
+  font-weight: 300;
+  letter-spacing: 0.22em;
+  color: #4fa3e0;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+
+.loading-track {
+  width: 220px;
+  height: 2px;
+  background: rgba(79, 163, 224, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 0 auto 0.65rem;
+}
+
+#loading-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #1a55bb, #4fa3e0);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+#loading-percent {
+  font-size: 0.72rem;
+  color: rgba(140, 190, 255, 0.45);
+  letter-spacing: 0.1em;
+}
