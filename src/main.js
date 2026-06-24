@@ -505,13 +505,26 @@ function updateComets(elapsed) {
     nucleus.getWorldPosition(_cometWPos);
     const wx = _cometWPos.x, wy = _cometWPos.y, wz = _cometWPos.z;
 
-    // anti-sun direction (away from origin)
     const len = Math.sqrt(wx * wx + wy * wy + wz * wz) || 1;
+
+    // SIS-81/SIS-82: hide nucleus and tail while inside/near the Sun disk
+    if (len < 5.5) {
+      nucleus.visible = false;
+      tailPts.material.opacity = 0;
+      cm.orbitLine.visible = showOrbits;
+      return;
+    }
+    nucleus.visible = true;
+
+    // anti-sun direction (away from origin)
     const ax = -wx / len, ay = -wy / len, az = -wz / len;
 
-    // tail grows closer to perihelion (small r), scaled per comet
+    // SIS-82: normalise opacity from perihelion (max) to aphelion (min) so short-period
+    // comets like Encke remain visible throughout their orbit, not just near the Sun.
+    const perihelionR = a * (1 - e);
+    const aphelionR   = a * (1 + e);
     const tailLength = THREE.MathUtils.clamp((a / r) * 9 * def.tailScale, 0.5, 60);
-    const opacity    = THREE.MathUtils.clamp(1.1 - r / (a * 0.7), 0.05, 0.85);
+    const opacity    = THREE.MathUtils.clamp(1.1 - (r - perihelionR) / (aphelionR - perihelionR), 0.12, 0.85);
     tailPts.material.opacity = opacity;
 
     // perpendicular spread vector in XZ plane
@@ -1850,6 +1863,7 @@ function enterFreecam() {
   hint.style.opacity = '0';
   viewControls.classList.remove('hidden');
   dateControls.classList.remove('hidden');
+  searchWrap.classList.remove('hidden');
   qualityPanel.classList.add('hidden');
 
   // Sync OrbitControls to current camera state before enabling
@@ -2108,6 +2122,11 @@ searchInput.addEventListener('blur', () => {
 document.addEventListener('keydown', e => {
   // Suppress browser native page zoom (Ctrl/⌘ + wheel, +/-/0)
   if ((e.ctrlKey || e.metaKey) && ['+', '-', '=', '0'].includes(e.key)) {
+    e.preventDefault();
+    return;
+  }
+  // SIS-104: in freecam, Ctrl/⌘+F would open browser Find and disrupt the camera — suppress it
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F') && viewMode === 'freecam') {
     e.preventDefault();
     return;
   }

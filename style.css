@@ -851,8 +851,95 @@ html, body {
   pointer-events: none;
 }
 
+/* ── Planet search ───────────────────────────────────────────────── */
+#planet-search {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.5rem;
+  z-index: 15;
+  width: 210px;
+  transition: opacity 0.3s ease;
+}
+
+#planet-search.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#planet-search-input {
+  width: 100%;
+  background: rgba(5, 8, 18, 0.82);
+  border: 1px solid rgba(80, 140, 255, 0.22);
+  border-radius: 8px;
+  color: var(--card-text);
+  font-size: 0.84rem;
+  font-family: inherit;
+  padding: 0.42rem 0.7rem;
+  outline: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#planet-search-input::placeholder {
+  color: var(--card-muted);
+}
+
+#planet-search-input:focus {
+  border-color: rgba(79, 163, 224, 0.5);
+  box-shadow: 0 0 0 2px rgba(79, 163, 224, 0.12);
+}
+
+#planet-search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  list-style: none;
+  background: rgba(5, 8, 18, 0.95);
+  border: 1px solid rgba(80, 140, 255, 0.22);
+  border-radius: 8px;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+#planet-search-results.hidden {
+  display: none;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.46rem 0.7rem;
+  cursor: pointer;
+  font-size: 0.84rem;
+  color: var(--card-text);
+  transition: background 0.12s;
+}
+
+.search-result-item:hover,
+.search-result-item[aria-selected="true"] {
+  background: rgba(79, 163, 224, 0.13);
+}
+
+.search-result-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 /* ── Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
+  #planet-search {
+    top: 0.75rem;
+    left: 0.75rem;
+    width: 160px;
+  }
+
   #view-controls {
     top: 0.75rem;
     right: 0.75rem;
