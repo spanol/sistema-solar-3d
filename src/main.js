@@ -32,6 +32,7 @@ function selectPlanet(p) {
   document.getElementById('view-controls').classList.add('hidden');
   document.getElementById('date-controls').classList.add('hidden');
   document.getElementById('quality-panel').classList.add('hidden');
+  searchWrap.classList.add('hidden');
   document.getElementById('planet-strip').classList.remove('hidden');
   updatePlanetStrip(p);
 
@@ -62,6 +63,7 @@ function backToTop() {
   hint.style.opacity = '1';
   document.getElementById('view-controls').classList.remove('hidden');
   document.getElementById('date-controls').classList.remove('hidden');
+  searchWrap.classList.remove('hidden');
   document.getElementById('planet-strip').classList.add('hidden');
   cam.tgtUp.set(0, 0, -1);
   moveCameraTo(
@@ -93,6 +95,7 @@ function enterFreecam() {
   hint.style.opacity = '0';
   document.getElementById('view-controls').classList.remove('hidden');
   document.getElementById('date-controls').classList.remove('hidden');
+  searchWrap.classList.remove('hidden');
   document.getElementById('quality-panel').classList.add('hidden');
   orbitControls.target.copy(cam.lookAt);
   orbitControls.update();
@@ -117,6 +120,84 @@ function toggleFreecam() {
 }
 
 btnFreecam.addEventListener('click', toggleFreecam);
+
+// -- Planet Search (SIS-123)
+const searchWrap    = document.getElementById('planet-search');
+const searchInput   = document.getElementById('planet-search-input');
+const searchResults = document.getElementById('planet-search-results');
+let _searchMatches   = [];
+let _searchSelectIdx = -1;
+
+function _searchFilter(q) {
+  if (!q.trim()) return [];
+  const lower = q.toLowerCase();
+  return planets.filter(p => p.data.name.toLowerCase().includes(lower));
+}
+
+function _searchHighlight(idx) {
+  searchResults.querySelectorAll('.search-result-item').forEach((el, i) => {
+    el.setAttribute('aria-selected', String(i === idx));
+  });
+  _searchSelectIdx = idx;
+}
+
+function _searchRender(matches) {
+  _searchMatches   = matches;
+  _searchSelectIdx = -1;
+  searchResults.innerHTML = '';
+  if (!matches.length) { searchResults.classList.add('hidden'); return; }
+  matches.forEach(p => {
+    const li  = document.createElement('li');
+    li.className = 'search-result-item';
+    li.setAttribute('role', 'option');
+    li.setAttribute('aria-selected', 'false');
+    const dot = document.createElement('span');
+    dot.className = 'search-result-dot';
+    dot.style.background = p.data.color;
+    const txt = document.createElement('span');
+    txt.textContent = p.data.name;
+    li.append(dot, txt);
+    li.addEventListener('mousedown', e => { e.preventDefault(); _searchCommit(p); });
+    searchResults.appendChild(li);
+  });
+  searchResults.classList.remove('hidden');
+}
+
+function _searchCommit(p) {
+  searchInput.value = '';
+  searchResults.classList.add('hidden');
+  searchInput.blur();
+  if (tourMode) stopTour();
+  if (state.viewMode === 'freecam') exitFreecam();
+  selectPlanet(p);
+}
+
+searchInput.addEventListener('input', () => {
+  _searchRender(_searchFilter(searchInput.value));
+});
+
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _searchHighlight(Math.min(_searchSelectIdx + 1, _searchMatches.length - 1));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _searchHighlight(Math.max(_searchSelectIdx - 1, 0));
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    const target = _searchSelectIdx >= 0 ? _searchMatches[_searchSelectIdx]
+                 : _searchMatches.length === 1 ? _searchMatches[0] : null;
+    if (target) _searchCommit(target);
+  } else if (e.key === 'Escape') {
+    searchInput.value = '';
+    searchResults.classList.add('hidden');
+    searchInput.blur();
+  }
+});
+
+searchInput.addEventListener('blur', () => {
+  setTimeout(() => searchResults.classList.add('hidden'), 150);
+});
 
 // -- Wire UI + tour callbacks
 initUICallbacks({ selectPlanet, backToTop, navigatePlanet });
@@ -159,6 +240,13 @@ document.addEventListener('keydown', e => {
       break;
     case '?':
       toggleShortcuts();
+      break;
+    case '/':
+      if (state.viewMode === 'top' || state.viewMode === 'freecam') {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      }
       break;
     default:
       if (e.key >= '1' && e.key <= '8' && !e.ctrlKey && !e.metaKey && !e.altKey && !cam.animating) {
