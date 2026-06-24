@@ -258,6 +258,68 @@ const MOON_TEXTURES = {
   titan:    '/textures/1k_titan.webp',
 };
 
+// Rocky planets / moons that receive procedural normal maps.
+// [sobelStrength, normalScale]: strength controls elevation contrast depth;
+// normalScale further multiplies the final per-pixel shading.
+const ROCKY_NORMAL_PARAMS = {
+  mercury: [3.2, 1.4],
+  mars:    [2.0, 0.9],
+  moon:    [3.8, 1.6],
+};
+
+// Generate an RGB normal map from a loaded THREE.Texture using a 3×3 Sobel filter.
+// Converts the color image to grayscale luminance, computes XY surface gradients,
+// and packs the resulting normal direction into R/G/B channels (OpenGL convention).
+function genNormalMap(colorTex, strength) {
+  try {
+    const img = colorTex.image;
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+
+    const srcC = document.createElement('canvas');
+    srcC.width = w; srcC.height = h;
+    srcC.getContext('2d').drawImage(img, 0, 0);
+    const src = srcC.getContext('2d').getImageData(0, 0, w, h).data;
+
+    const dstC = document.createElement('canvas');
+    dstC.width = w; dstC.height = h;
+    const dstCtx = dstC.getContext('2d');
+    const out = dstCtx.createImageData(w, h);
+    const dst = out.data;
+
+    function lum(x, y) {
+      x = ((x % w) + w) % w;
+      y = Math.max(0, Math.min(h - 1, y));
+      const i = (y * w + x) * 4;
+      return (src[i] * 0.299 + src[i + 1] * 0.587 + src[i + 2] * 0.114) / 255;
+    }
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const tl = lum(x-1,y-1), t = lum(x,y-1), tr = lum(x+1,y-1);
+        const  l = lum(x-1,y  ),                   r = lum(x+1,y  );
+        const bl = lum(x-1,y+1), b = lum(x,y+1), br = lum(x+1,y+1);
+
+        let nx = -((tr + 2*r + br) - (tl + 2*l + bl)) * strength;
+        let ny = -((bl + 2*b + br) - (tl + 2*t + tr)) * strength;
+        const nz = 1.0;
+        const len = Math.sqrt(nx*nx + ny*ny + nz*nz);
+
+        const i = (y * w + x) * 4;
+        dst[i  ] = (nx / len * 0.5 + 0.5) * 255 | 0;
+        dst[i+1] = (ny / len * 0.5 + 0.5) * 255 | 0;
+        dst[i+2] = (nz / len * 0.5 + 0.5) * 255 | 0;
+        dst[i+3] = 255;
+      }
+    }
+
+    dstCtx.putImageData(out, 0, 0);
+    return new THREE.CanvasTexture(dstC);
+  } catch (_) {
+    return null;
+  }
+}
+
 // -- Loading screen: tracks all texture loads, fades out when done
 const _loadScreen  = document.getElementById('loading-screen');
 const _loadBar     = document.getElementById('loading-bar');
@@ -605,6 +667,14 @@ const planets = planetBodies.map((data, i) => {
       tex.colorSpace = THREE.SRGBColorSpace;
       mesh.material.map = tex;
       mesh.material.color.set(0xffffff);
+      const nrmParams = ROCKY_NORMAL_PARAMS[data.id];
+      if (nrmParams) {
+        const nrmMap = genNormalMap(tex, nrmParams[0]);
+        if (nrmMap) {
+          mesh.material.normalMap = nrmMap;
+          mesh.material.normalScale.set(nrmParams[1], nrmParams[1]);
+        }
+      }
       mesh.material.needsUpdate = true;
       _onTex();
     }, undefined, _onTex);
@@ -755,6 +825,14 @@ planets.forEach(p => {
         tex.colorSpace = THREE.SRGBColorSpace;
         moonMesh.material.map = tex;
         moonMesh.material.color.set(0xffffff);
+        const nrmParams = ROCKY_NORMAL_PARAMS[md.id];
+        if (nrmParams) {
+          const nrmMap = genNormalMap(tex, nrmParams[0]);
+          if (nrmMap) {
+            moonMesh.material.normalMap = nrmMap;
+            moonMesh.material.normalScale.set(nrmParams[1], nrmParams[1]);
+          }
+        }
         moonMesh.material.needsUpdate = true;
       });
     }
